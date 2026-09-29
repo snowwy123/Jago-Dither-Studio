@@ -1,0 +1,1328 @@
+<!doctype html>
+<html lang="en" data-theme="sketchbook">
+  <head
+    ><meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Jago Dither Studio</title
+    ><meta
+      name="description"
+      content="A little print workshop for pixels, patterns and things that move."
+    />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%23283e50'/%3E%3Cpath d='M12 12h12v12H12zM28 12h12v12H28zM44 12h8v8h-8zM12 28h12v12H12zM30 30h8v8h-8zM46 30h4v4h-4zM12 44h8v8h-8zM30 46h4v4h-4z' fill='%23edce83'/%3E%3C/svg%3E"
+    />
+    <style>
+      /* STYLE */
+    </style></head
+  >
+  <body>
+    <header class="top"
+      ><div class="brand"
+        ><svg aria-hidden="true" viewBox="0 0 48 48">
+          <rect width="48" height="48" rx="9" />
+          <path
+            d="M9 9h10v10H9zM24 9h10v10H24zM9 24h10v10H9zM26 26h6v6h-6zM38 11h3v3h-3zM11 39h3v3h-3z"
+          /></svg
+        ><div>Jago Dither <small>STUDIO</small><span>Pictures into patterns.</span></div></div
+      >
+      <div class="project-label"
+        ><label for="projectName">ON THE DESK</label
+        ><input id="projectName" value="A quiet morning" maxlength="70" aria-label="Project name"
+      /></div>
+      <nav aria-label="Files"
+        ><button id="importBtn">↥ <span>Add image</span></button
+        ><button id="blankCanvas">New</button><button id="openBtn">Open</button
+        ><button id="saveBtn">Save</button
+        ><button id="helpBtn" aria-label="Help and about">?</button
+        ><button id="exportBtn" class="primary">Export ↗</button></nav
+      ></header
+    >
+    <main>
+      <section class="workbench" aria-label="Preview">
+        <div class="bench-tools"
+          ><span class="hand">The print table</span
+          ><button id="dimensions" class="tiny" title="Resize page"></button
+          ><div class="spacer"></div
+          ><button id="undoBtn" title="Undo (Ctrl+Z)" aria-label="Undo">↶</button
+          ><button id="redoBtn" title="Redo (Ctrl+Shift+Z)" aria-label="Redo">↷</button
+          ><select id="viewMode" aria-label="Preview view"
+            ><option value="result">Print</option
+            ><option value="split">Before / after</option
+            ><option value="original">Original</option></select
+          ><button
+            id="panBtn"
+            title="Pan the page (H), or use the middle mouse button"
+            aria-pressed="false"
+            >Pan</button
+          ><span id="zoomReadout" class="tiny">100%</span
+          ><button id="fitBtn" title="Fit image">Fit</button
+          ><button id="actualBtn" title="View at actual output size">100%</button></div
+        >
+        <div
+          id="dropZone"
+          class="stage"
+          tabindex="0"
+          aria-label="Image preview. Drop an image here."
+        >
+          <div class="desk-note"
+            >Find your print.<svg viewBox="0 0 75 28">
+              <path d="M3 6q34 26 62 6m-12-4 12 4-8 10" /></svg
+          ></div>
+          <div id="paper"
+            ><canvas id="resultCanvas" aria-label="Dithered image"></canvas
+            ><canvas id="originalCanvas" aria-label="Original image comparison"></canvas
+            ><div
+              id="splitLine"
+              role="slider"
+              tabindex="0"
+              aria-label="Before and after divider"
+              aria-valuemin="0"
+              aria-valuemax="100"
+              aria-valuenow="50"
+            ></div
+            ><div id="layerBounds" hidden>
+              <button
+                class="layer-handle nw"
+                data-grip="nw"
+                aria-label="Resize layer from top left"
+              ></button>
+              <button
+                class="layer-handle ne"
+                data-grip="ne"
+                aria-label="Resize layer from top right"
+              ></button>
+              <button
+                class="layer-handle sw"
+                data-grip="sw"
+                aria-label="Resize layer from bottom left"
+              ></button>
+              <button
+                class="layer-handle se"
+                data-grip="se"
+                aria-label="Resize layer from bottom right"
+              ></button>
+              <button
+                class="layer-handle turn"
+                data-grip="turn"
+                aria-label="Rotate layer"
+                title="Rotate · Shift snaps to 15°"
+                >↻</button
+              >
+            </div></div
+          >
+          <div class="drop-message"
+            >Drop something lovely here.<small
+              >PNG, JPEG, WebP or a Jago PNG sequence ZIP</small
+            ></div
+          >
+        </div>
+        <div class="status"
+          ><span id="statusText" role="status">Setting out the inks…</span
+          ><span id="renderTime" class="tiny"></span
+        ></div>
+        <div id="compareRow" class="compare-row" hidden
+          ><label for="compare">Before / after</label
+          ><input id="compare" type="range" min="0" max="100" value="50"
+        /></div>
+        <section class="timeline" aria-label="Animation"
+          ><div class="timeline-top"
+            ><button id="playBtn" class="play" aria-label="Play loop">▶</button
+            ><span class="hand">A little movement</span
+            ><select id="motionQuick" aria-label="Loop movement"
+              ><option value="none">Still print</option
+              ><option value="drift">Slow wander</option
+              ><option value="ripple">Paper waves</option
+              ><option value="sway">Easy sway</option
+              ><option value="breathe">Ink breath</option
+              ><option value="zoom">Lens breath</option
+              ><option value="twist">Soft twist</option
+              ><option value="crawl">Dancing grain</option></select
+            ><div class="spacer"></div><span id="frameLabel" class="tiny">01 / 36</span></div
+          ><input
+            id="scrub"
+            type="range"
+            min="0"
+            max="35"
+            value="0"
+            aria-label="Animation frame"
+          /><div class="timeline-bottom"
+            ><span>Scrub a loop. Find a happy accident.</span
+            ><span id="loopInfo">3 seconds · 12 fps</span></div
+          ></section
+        >
+      </section>
+      <aside class="inspector"
+        ><div class="tabs" role="tablist" aria-label="Settings"
+          ><button data-tab="print" role="tab" aria-selected="true">Print</button
+          ><button data-tab="ink" role="tab" aria-selected="false">Ink</button
+          ><button data-tab="move" role="tab" aria-selected="false">Move</button
+          ><button data-tab="layers" role="tab" aria-selected="false">Layers</button
+          ><button data-tab="play" role="tab" aria-selected="false">Try it</button></div
+        >
+        <div class="panel" data-panel="print">
+          <section
+            ><div class="section-title"><h2>Make your mark</h2><span>01</span></div
+            ><label class="field"
+              >Print style<select id="method" data-setting="method"
+                ><optgroup label="Ordered checks"
+                  ><option value="bayer2">Little checks · Bayer 2</option
+                  ><option value="bayer4">Ordered ink · Bayer 4</option
+                  ><option value="bayer8">Fine fabric · Bayer 8</option
+                  ><option value="bayer16">Silk scarf · Bayer 16</option></optgroup
+                ><optgroup label="Error diffusion"
+                  ><option value="floyd">Soft scatter · Floyd–Steinberg</option
+                  ><option value="atkinson">Old screen · Atkinson</option
+                  ><option value="burkes">Sunday scatter · Burkes</option
+                  ><option value="sierra">Quick sketch · Sierra Lite</option
+                  ><option value="jjn">Sunday newspaper · Jarvis–Judice–Ninke</option
+                  ><option value="stucki">Fine crumbs · Stucki</option
+                  ><option value="sierra3">Soft landing · Sierra</option></optgroup
+                ><optgroup label="Patterns"
+                  ><option value="grain">Paper freckles · grain</option
+                  ><option value="dots">Sunday dots · halftone</option
+                  ><option value="lines">Diagonal day · hatch</option
+                  ><option value="crosshatch">Woven together · crosshatch</option
+                  ><option value="rings">Record shop · rings</option
+                  ><option value="diamonds">Argyle socks · diamonds</option
+                  ><option value="bricks">Backyard wall · bricks</option
+                  ><option value="weave">Picnic blanket · weave</option
+                  ><option value="zigzag">Wiggly jumper · chevrons</option
+                  ><option value="scales">Gone fishing · scales</option
+                  ><option value="sparkles">Lucky stars · crosses</option
+                  ><option value="maze">Wrong turn · maze</option
+                  ><option value="custom">Your little tile · custom</option></optgroup
+                ><optgroup label="Other marks"
+                  ><option value="threshold">Cut paper · threshold</option
+                  ><option value="ascii">Typewriter club · characters</option></optgroup
+                ></select
+              ></label
+            ><p id="methodHint" class="hint"></p>
+            <div class="range"
+              ><label for="cell">Mark size <output id="cellValue"></output></label
+              ><input id="cell" data-setting="cell" type="range" min="1" max="24" step="1"
+            /></div>
+            <div class="range"
+              ><label for="strength">Dither strength <output id="strengthValue"></output></label
+              ><input id="strength" data-setting="strength" type="range" min="0" max="150"
+            /></div>
+            <details class="extras"
+              ><summary>Pattern &amp; texture</summary
+              ><div class="range"
+                ><label for="patternScale"
+                  >Pattern size<output id="patternScaleValue"></output></label
+                ><input
+                  id="patternScale"
+                  data-setting="patternScale"
+                  type="range"
+                  min="0.5"
+                  max="6"
+                  step="0.25" /></div
+              ><div class="range"
+                ><label for="patternAngle"
+                  >Pattern angle<output id="patternAngleValue"></output></label
+                ><input
+                  id="patternAngle"
+                  data-setting="patternAngle"
+                  type="range"
+                  min="-180"
+                  max="180"
+                  step="1" /></div
+              ><div class="range"
+                ><label for="grain">Paper grain<output id="grainValue"></output></label
+                ><input
+                  id="grain"
+                  data-setting="grain"
+                  type="range"
+                  min="0"
+                  max="50"
+                  step="1" /></div
+              ><button id="newGrain">Shuffle the freckles</button
+              ><p class="hint"
+                >Pattern size and angle change ordered checks, dots, hatching and rings. Scatter
+                methods make their own arrangement. Paper grain works with every style.</p
+              ></details
+            ><details class="extras"
+              ><summary>Place the pattern</summary
+              ><div class="range"
+                ><label for="patternX"
+                  >Across · pattern cells<output id="patternXValue"></output></label
+                ><input
+                  id="patternX"
+                  data-setting="patternX"
+                  type="range"
+                  min="-64"
+                  max="64"
+                  step="1" /></div
+              ><div class="range"
+                ><label for="patternY"
+                  >Down · pattern cells<output id="patternYValue"></output></label
+                ><input
+                  id="patternY"
+                  data-setting="patternY"
+                  type="range"
+                  min="-64"
+                  max="64"
+                  step="1" /></div></details
+            ><details class="extras" id="diffusionControls"
+              ><summary>Scatter behaviour</summary
+              ><label class="check"
+                ><input id="serpentine" data-setting="serpentine" type="checkbox" />Alternate
+                direction each row</label
+              ><div class="range"
+                ><label for="diffusionReach"
+                  >Neighbour distance<output id="diffusionReachValue"></output></label
+                ><input
+                  id="diffusionReach"
+                  data-setting="diffusionReach"
+                  type="range"
+                  min="1"
+                  max="3"
+                  step="1" /></div
+              ><p class="hint"
+                >A wider reach makes the scatter more open and wiry. Alternating rows reduces
+                directional streaks.</p
+              ></details
+            ><details class="extras"
+              ><summary>Tone duet</summary
+              ><label class="field"
+                >A second pattern for the highlights<select id="duet" data-setting="duet"
+                  ><option value="off">One pattern throughout</option
+                  ><option value="bayer4">Ordered checks</option
+                  ><option value="dots">Halftone dots</option
+                  ><option value="lines">Diagonal hatching</option
+                  ><option value="crosshatch">Crosshatching</option
+                  ><option value="grain">Paper freckles</option
+                  ><option value="diamonds">Diamonds</option
+                  ><option value="custom">Your custom tile</option></select
+                ></label
+              ><div class="range"
+                ><label for="duetBalance"
+                  >Where the patterns meet<output id="duetBalanceValue"></output></label
+                ><input
+                  id="duetBalance"
+                  data-setting="duetBalance"
+                  type="range"
+                  min="0"
+                  max="100"
+                  step="1" /></div
+              ><div class="range"
+                ><label for="duetSoftness"
+                  >Blend width<output id="duetSoftnessValue"></output></label
+                ><input
+                  id="duetSoftness"
+                  data-setting="duetSoftness"
+                  type="range"
+                  min="1"
+                  max="100"
+                  step="1" /></div
+              ><p class="hint"
+                >Keep the main style in the shadows and let another pattern appear in the
+                highlights. Lower the meeting point to use more of the second pattern.</p
+              ></details
+            ><details id="tileControls" class="extras"
+              ><summary>Your little tile</summary
+              ><p class="hint"
+                >Paint the repeating 4 × 4 threshold tile. Low numbers put down ink sooner; high
+                numbers leave more paper. Each square is one pattern cell.</p
+              ><label class="field"
+                >Value to paint<select id="tileBrush"
+                  ><option value="0">1</option
+                  ><option value="1">2</option
+                  ><option value="2">3</option
+                  ><option value="3">4</option
+                  ><option value="4">5</option
+                  ><option value="5">6</option
+                  ><option value="6">7</option
+                  ><option value="7">8</option
+                  ><option value="8">9</option
+                  ><option value="9">10</option
+                  ><option value="10">11</option
+                  ><option value="11">12</option
+                  ><option value="12">13</option
+                  ><option value="13">14</option
+                  ><option value="14">15</option
+                  ><option value="15">16</option></select
+                ></label
+              ><div id="tileEditor" aria-label="Custom dither tile"></div
+              ><div class="button-row"
+                ><button id="tileChecks">Ordered checks</button
+                ><button id="tileDiagonal">Little staircase</button
+                ><button id="tileShuffle">Scatter values</button></div
+              ><p class="hint"
+                >Choose Your little tile as the print style or the second pattern. Save a recipe to
+                share your tile.</p
+              ></details
+            ><label class="field" id="charsField" hidden
+              >Characters, light to dark<input
+                id="chars"
+                data-setting="chars"
+                maxlength="32"
+                spellcheck="false"
+                aria-describedby="charsHint"
+              /><span id="charsHint" class="hint"
+                >2–16 characters. Start with a space for the lightest areas.</span
+              ></label
+            >
+            <label class="field"
+              >Print resolution<select id="width" data-setting="width"
+                ><option value="320">320 px · quick sketch</option
+                ><option value="480">480 px · small print</option
+                ><option value="720">720 px · everyday</option
+                ><option value="1024">1024 px · more detail</option></select
+              ><span class="hint"
+                >Longest edge. Mark size is measured at this resolution.</span
+              ></label
+            ></section
+          >
+          <section
+            ><div class="section-title"><h2>Prepare the image</h2><span>02</span></div>
+            <div class="range"
+              ><label for="brightness">Brightness <output id="brightnessValue"></output></label
+              ><input id="brightness" data-setting="brightness" type="range" min="-100" max="100"
+            /></div>
+            <div class="range"
+              ><label for="contrast">Contrast <output id="contrastValue"></output></label
+              ><input id="contrast" data-setting="contrast" type="range" min="-90" max="100"
+            /></div>
+            <div class="range"
+              ><label for="gamma">Midtones <output id="gammaValue"></output></label
+              ><input id="gamma" data-setting="gamma" type="range" min="0.25" max="3" step="0.05"
+            /></div>
+            <div class="range"
+              ><label for="saturation"
+                >Colour intensity <output id="saturationValue"></output></label
+              ><input id="saturation" data-setting="saturation" type="range" min="0" max="200"
+            /></div>
+            <div class="range"
+              ><label for="edge">Bring out edges<output id="edgeValue"></output></label
+              ><input id="edge" data-setting="edge" type="range" min="0" max="100" step="1" /></div
+            ><div class="range"
+              ><label for="posterize"
+                >Tone steps · 0 is off<output id="posterizeValue"></output></label
+              ><input
+                id="posterize"
+                data-setting="posterize"
+                type="range"
+                min="0"
+                max="16"
+                step="1" /></div
+            ><label class="check"
+              ><input id="invert" data-setting="invert" type="checkbox" />Invert tones</label
+            ><label class="check"
+              ><input id="transparent" data-setting="transparent" type="checkbox" />Keep source
+              transparency</label
+            ><p class="hint"
+              >Transparency keeps an image's existing cut-out edges. It doesn't remove a solid
+              background.</p
+            ><button id="resetPrint">Reset print settings</button></section
+          >
+          <section
+            ><h2>The effects bench</h2
+            ><p class="hint"
+              >Effects go through the dithering too, so the finished print stays within your inks.
+              Stack a few, or keep it subtle.</p
+            ><details class="extras"
+              ><summary>Bent signals</summary
+              ><div class="range"
+                ><label for="rowSlip">Tape slip<output id="rowSlipValue"></output></label
+                ><input
+                  id="rowSlip"
+                  data-setting="rowSlip"
+                  type="range"
+                  min="0"
+                  max="40"
+                  step="1" /></div
+              ><div class="range"
+                ><label for="blockShift">Block shuffle<output id="blockShiftValue"></output></label
+                ><input
+                  id="blockShift"
+                  data-setting="blockShift"
+                  type="range"
+                  min="0"
+                  max="40"
+                  step="1" /></div
+              ><div class="range"
+                ><label for="rgbSplit"
+                  >Wrong channel · colour split<output id="rgbSplitValue"></output></label
+                ><input
+                  id="rgbSplit"
+                  data-setting="rgbSplit"
+                  type="range"
+                  min="0"
+                  max="20"
+                  step="1" /></div
+              ><div class="range"
+                ><label for="effectSize"
+                  >Band / block size<output id="effectSizeValue"></output></label
+                ><input
+                  id="effectSize"
+                  data-setting="effectSize"
+                  type="range"
+                  min="2"
+                  max="64"
+                  step="1" /></div></details
+            ><details class="extras"
+              ><summary>Light & paper</summary
+              ><div class="range"
+                ><label for="bloom">Ink lantern · glow<output id="bloomValue"></output></label
+                ><input
+                  id="bloom"
+                  data-setting="bloom"
+                  type="range"
+                  min="0"
+                  max="100"
+                  step="1" /></div
+              ><div class="range"
+                ><label for="bloomRadius"
+                  >Glow spread · pattern cells<output id="bloomRadiusValue"></output></label
+                ><input
+                  id="bloomRadius"
+                  data-setting="bloomRadius"
+                  type="range"
+                  min="1"
+                  max="12"
+                  step="1" /></div
+              ><div class="range"
+                ><label for="scanlines">Scanline shade<output id="scanlinesValue"></output></label
+                ><input
+                  id="scanlines"
+                  data-setting="scanlines"
+                  type="range"
+                  min="0"
+                  max="100"
+                  step="1" /></div
+              ><div class="range"
+                ><label for="vignette">Dark corners<output id="vignetteValue"></output></label
+                ><input
+                  id="vignette"
+                  data-setting="vignette"
+                  type="range"
+                  min="0"
+                  max="100"
+                  step="1" /></div
+              ><div class="range"
+                ><label for="solarize">Negative pockets<output id="solarizeValue"></output></label
+                ><input
+                  id="solarize"
+                  data-setting="solarize"
+                  type="range"
+                  min="0"
+                  max="100"
+                  step="1" /></div></details
+            ><label class="check"
+              ><input id="animateEffects" data-setting="animateEffects" type="checkbox" />Animate
+              tape, blocks and colour split</label
+            ><p class="hint"
+              >Ink lantern spreads bright tones before printing. It makes a dithered halo, without
+              adding extra colours.</p
+            ><button id="resetEffects">Reset effects</button></section
+          ></div
+        >
+        <div class="panel" data-panel="ink" hidden
+          ><section
+            ><div class="section-title"><h2>Pick your inks</h2><span>03</span></div
+            ><label class="field"
+              >Ink shelf<select id="palettePreset"
+                ><option value="blue">Blue pencil</option
+                ><option value="mono">Black coffee</option
+                ><option value="pink">Rose receipt</option
+                ><option value="moss">Mossy pocket</option
+                ><option value="sunset">Late bus home</option
+                ><option value="candy">Sweet shop</option
+                ><option value="grey">Graphite tin</option
+                ><option value="risograph">Sunday poster</option>
+                <option value="petrol">Seaside postcard</option>
+                <option value="lavender">Lilac notebook</option>
+                <option value="arcade">After the arcade</option>
+                <option value="parcel">Brown paper parcel</option>
+                <option value="fern">Fern press</option>
+                <option value="custom">Your own inks</option></select
+              ></label
+            ><div id="paletteList"></div
+            ><div class="button-row"
+              ><button id="swapInks">Reverse inks</button><button id="addInk">+ Add ink</button
+              ><button id="extractPalette">Find inks in image</button></div
+            ><p class="hint"
+              >Use 2–8 colours. Put your paper colour last. Click an ink to edit its colour or hex
+              value.</p
+            ><p class="hint"
+              >Character prints use the darkest ink and lightest paper from your palette.</p
+            ></section
+          ><section
+            ><h2>Colour by tone</h2
+            ><label class="field"
+              >Gradient map<select id="mapMode" data-setting="mapMode"
+                ><option value="off">Off · use the ink shelf</option
+                ><option value="duo">Two colours · shadows to highlights</option
+                ><option value="trio">Three colours · add a middle ink</option></select
+              ></label
+            ><div id="mapFields"
+              ><div class="map-colours"
+                ><label>Shadows<input type="color" id="map0" data-map="0" /></label
+                ><label id="mapMiddle">Midtones<input type="color" id="map1" data-map="1" /></label
+                ><label>Highlights<input type="color" id="map2" data-map="2" /></label></div
+              ><div id="mapPreview"></div
+              ><div class="button-row"
+                ><button data-map-preset="sunset">Last light</button
+                ><button data-map-preset="acid">Sour sweets</button
+                ><button data-map-preset="sea">Deep sea</button></div
+              ></div
+            ><p class="hint"
+              >Map image brightness to these colours before dithering. While enabled, the map
+              colours become your printing inks. Brightness and Midtones in Print still shape the
+              result.</p
+            ></section
+          ><section
+            ><h2>Keep a good recipe</h2
+            ><label class="field"
+              >Recipe name<input id="recipeName" value="My little print" maxlength="60" /></label
+            ><div class="button-row"
+              ><button id="saveRecipe">Save recipe</button
+              ><button id="importRecipe">Import recipe</button></div
+            ><p class="hint"
+              >A recipe saves print, palette and motion settings. Your image stays separate, so you
+              can try it on anything.</p
+            ></section
+          ></div
+        >
+        <div class="panel" data-panel="move" hidden
+          ><section
+            ><div class="section-title"><h2>Give it a nudge</h2><span>04</span></div
+            ><label class="field"
+              >Movement<select id="motion" data-setting="motion"
+                ><option value="none">Still print</option
+                ><option value="drift">Slow wander</option
+                ><option value="ripple">Paper waves</option
+                ><option value="sway">Easy sway</option
+                ><option value="breathe">Ink breath</option
+                ><option value="zoom">Lens breath</option
+                ><option value="twist">Soft twist</option
+                ><option value="crawl">Dancing grain</option></select
+              ></label
+            ><p id="motionHint" class="hint"></p
+            ><div class="range"
+              ><label for="amount">Movement amount <output id="amountValue"></output></label
+              ><input id="amount" data-setting="amount" type="range" min="0" max="40" /></div
+            ><div id="waveField" class="range"
+              ><label for="waves">Waves across the print <output id="wavesValue"></output></label
+              ><input id="waves" data-setting="waves" type="range" min="1" max="8" step="1" /></div
+            ><div class="range"
+              ><label for="seconds">Loop length <output id="secondsValue"></output></label
+              ><input
+                id="seconds"
+                data-setting="seconds"
+                type="range"
+                min="0.25"
+                max="12"
+                step="0.25" /></div
+            ><label class="field"
+              >Frames per second<select id="fps" data-setting="fps"
+                ><option value="6">6 · stop-motion feel</option
+                ><option value="12">12 · easy movement</option
+                ><option value="24">24 · smoother</option></select
+              ></label
+            ><p class="note"
+              >Global movement affects the whole print. For individual image or text movement, open
+              Layers. Imported loops play once per project loop.</p
+            ><details class="extras"
+              ><summary>Make the ink dance</summary
+              ><label class="field"
+                >Texture movement<select id="temporal" data-setting="temporal"
+                  ><option value="none">None</option
+                  ><option value="tide">Ink tide · all-over pulse</option
+                  ><option value="boil">Little fizz · shifting grain</option
+                  ><option value="roll">Passing cloud · travelling tones</option
+                  ><option value="rings">Pond rings · spreading tones</option
+                  ><option value="weave">Woven light · crossing waves</option
+                  ><option value="shimmer">Check shuffle · alternating cells</option></select
+                ></label
+              ><div class="range"
+                ><label for="temporalAmount"
+                  >Dance amount<output id="temporalAmountValue"></output></label
+                ><input
+                  id="temporalAmount"
+                  data-setting="temporalAmount"
+                  type="range"
+                  min="0"
+                  max="50"
+                  step="1" /></div
+              ><div class="range"
+                ><label for="temporalCycles"
+                  >Cycles per loop<output id="temporalCyclesValue"></output></label
+                ><input
+                  id="temporalCycles"
+                  data-setting="temporalCycles"
+                  type="range"
+                  min="1"
+                  max="6"
+                  step="1" /></div
+              ><p class="hint"
+                >Works with every print style, including scatter and character art. The marks change
+                while the composition stays in place. It loops independently of whole-image
+                movement.</p
+              ></details
+            ><button id="resetMotion">Reset movement</button></section
+          ></div
+        >
+        <div class="panel" data-panel="layers" hidden>
+          <section
+            ><div class="section-title"><h2>Bits on the page</h2><span id="layerCount"></span></div>
+            <div class="button-row"
+              ><button id="addLayerImage">+ Image</button><button id="addText">+ Text</button
+              ><button id="addOverlay">+ Overlay</button><button id="addGradient">+ Gradient</button
+              ><button id="importLoop">+ Wobble loop</button></div
+            >
+            <p class="hint"
+              >Stack images, loops, lettering and overlays. Top of each print stage is front of the
+              page. With this tab open, drag on the preview to move your selected layer. The dashed
+              box is its original footprint, before the print effect.</p
+            >
+            <div id="layerList"></div>
+            <div id="layerSettings" hidden>
+              <div class="button-row"
+                ><button id="layerUp" aria-label="Raise layer">↑</button
+                ><button id="layerDown" aria-label="Lower layer">↓</button
+                ><button id="layerDuplicate">Duplicate</button
+                ><button id="layerDelete">Remove</button></div
+              >
+              <label class="field"
+                >Layer name<input id="layerName" data-layer="name" maxlength="60"
+              /></label>
+
+              <div id="overlaySettings" hidden>
+                <h3>A little atmosphere</h3>
+                <label class="field"
+                  >Overlay<select id="overlayKind" data-layer="overlay">
+                    <option value="stars">Little stars</option
+                    ><option value="sparkles">Sparkles</option
+                    ><option value="lights">Soft lights</option
+                    ><option value="dust">Floating dust</option></select
+                  ></label
+                >
+                <label class="field"
+                  >Place it<select id="overlayStage" data-layer="stage"
+                    ><option value="before">Before dithering</option
+                    ><option value="after">After dithering</option></select
+                  ></label
+                >
+                <p class="hint" id="overlayStageHint"></p>
+                <label class="field"
+                  >Colour<input id="overlayColour" data-layer="colour" type="color"
+                /></label>
+                <div class="range"
+                  ><label for="overlayCount">How many<output id="overlayCountValue"></output></label
+                  ><input id="overlayCount" data-layer="count" type="range" min="1" max="200"
+                /></div>
+                <div class="range"
+                  ><label for="overlaySize"
+                    >Mark size · px<output id="overlaySizeValue"></output></label
+                  ><input id="overlaySize" data-layer="dotSize" type="range" min="1" max="160"
+                /></div>
+                <h3>Bring it to life</h3>
+                <label class="field"
+                  >Animate the marks<select id="overlayAnimation" data-layer="animation"
+                    ><option value="none">Still</option
+                    ><option value="twinkle">Twinkle</option
+                    ><option value="pulse">Slow pulse</option
+                    ><option value="drift">Gentle drift</option></select
+                  ></label
+                >
+                <div id="overlayFade"
+                  ><div class="range"
+                    ><label for="overlayDepth"
+                      >Fade amount · %<output id="overlayDepthValue"></output></label
+                    ><input
+                      id="overlayDepth"
+                      data-layer="depth"
+                      type="range"
+                      min="0"
+                      max="100" /></div
+                ></div>
+                <div id="overlayDrift"
+                  ><div class="range"
+                    ><label for="overlayTravel"
+                      >Drift distance · px<output id="overlayTravelValue"></output></label
+                    ><input
+                      id="overlayTravel"
+                      data-layer="travel"
+                      type="range"
+                      min="0"
+                      max="100" /></div
+                ></div>
+                <details id="overlayTiming" class="extras"
+                  ><summary>Animation timing</summary
+                  ><div
+                    ><label class="field"
+                      >Cycles per loop<input
+                        id="overlayCycles"
+                        data-layer="cycles"
+                        type="number"
+                        min="1"
+                        max="8"
+                        step="1" /></label
+                    ><label class="check"
+                      ><input id="overlayTogether" data-layer="together" type="checkbox" />Move or
+                      fade together</label
+                    ></div
+                  ></details
+                >
+                <p class="hint"
+                  >Press Play below the page. Each mark follows its own timing unless you tick Move
+                  or fade together. Loop length and playback speed live in Move.</p
+                >
+                <details class="extras"
+                  ><summary>Scatter &amp; size variation</summary>
+                  <div class="range"
+                    ><label for="overlayVariation"
+                      >Size variation · %<output id="overlayVariationValue"></output></label
+                    ><input
+                      id="overlayVariation"
+                      data-layer="variation"
+                      type="range"
+                      min="0"
+                      max="95"
+                  /></div>
+                  <div class="range"
+                    ><label for="overlaySpacing"
+                      >Breathing room · %<output id="overlaySpacingValue"></output></label
+                    ><input id="overlaySpacing" data-layer="spacing" type="range" min="0" max="100"
+                  /></div>
+                  <p class="hint"
+                    >More breathing room spreads marks more evenly. Use How many to change the
+                    density. Mark size is measured on your page, before layer scaling.</p
+                  >
+                  <div class="two-fields"
+                    ><label class="field"
+                      >Scatter seed<input
+                        id="overlaySeed"
+                        data-layer="seed"
+                        type="number"
+                        min="0"
+                        max="999999"
+                        step="1" /></label
+                  ></div>
+                  <button id="reshuffleOverlay">Shuffle the scatter</button>
+                </details>
+              </div>
+              <div id="textSettings" hidden>
+                <label class="field"
+                  >Your words<textarea
+                    id="layerText"
+                    data-layer="text"
+                    rows="3"
+                    maxlength="500"
+                  ></textarea>
+                </label>
+                <div class="two-fields"
+                  ><label class="field"
+                    >Lettering<select id="layerFont" data-layer="font"
+                      ><option value="bold">Big &amp; bold</option
+                      ><option value="sans">Everyday</option
+                      ><option value="serif">Bookish</option
+                      ><option value="mono">Typewriter</option
+                      ><option value="hand">Handwritten</option></select
+                    ></label
+                  ></div
+                >
+                <div class="two-fields"
+                  ><label class="field"
+                    >Text size<input
+                      id="layerSize"
+                      data-layer="size"
+                      type="number"
+                      min="4"
+                      max="400" /></label
+                  ><label class="field"
+                    >Line spacing<input
+                      id="layerLeading"
+                      data-layer="leading"
+                      type="number"
+                      min="0.7"
+                      max="2"
+                      step="0.05" /></label
+                ></div>
+                <label class="field"
+                  >Alignment<select id="layerAlign" data-layer="align"
+                    ><option value="left">Left</option
+                    ><option value="center">Centre</option
+                    ><option value="right">Right</option></select
+                  ></label
+                >
+                <label class="check"
+                  ><input id="layerBold" data-layer="bold" type="checkbox" />Heavier
+                  lettering</label
+                >
+                <p class="hint"
+                  >Text stays editable. Fonts come from your device, so lettering can look slightly
+                  different on another computer.</p
+                >
+              </div>
+              <div id="fillSettings" hidden
+                ><h2>Fill with a little colour</h2
+                ><label class="field"
+                  >Fill<select id="layerFillMode" data-layer="fillMode"
+                    ><option value="solid">One colour</option
+                    ><option value="linear">Linear gradient</option
+                    ><option value="radial">Radial gradient</option></select
+                  ></label
+                ><div class="two-fields"
+                  ><label class="field"
+                    >First colour<input id="layerColour" type="color" data-layer="colour" /></label
+                  ><label class="field"
+                    >Second colour<input
+                      id="layerColour2"
+                      type="color"
+                      data-layer="colour2" /></label></div
+                ><div class="range"
+                  ><label for="gradientAngle"
+                    >Gradient angle<output id="gradientAngleValue"></output></label
+                  ><input
+                    id="gradientAngle"
+                    type="range"
+                    data-layer="gradientAngle"
+                    min="-180"
+                    max="180" /></div
+                ><p class="hint"
+                  >The fill belongs to the original composition. Your chosen print inks or gradient
+                  map determine the final printed colours.</p
+                ><div id="gradientSize" class="two-fields"
+                  ><label class="field"
+                    >Rectangle width<input
+                      id="gradientW"
+                      data-layer="w"
+                      type="number"
+                      min="16"
+                      max="2048" /></label
+                  ><label class="field"
+                    >Rectangle height<input
+                      id="gradientH"
+                      data-layer="h"
+                      type="number"
+                      min="16"
+                      max="2048" /></label></div></div
+              ><div class="range"
+                ><label for="layerOpacity">Opacity<output id="layerOpacityValue"></output></label
+                ><input
+                  id="layerOpacity"
+                  data-layer="opacity"
+                  type="range"
+                  min="0"
+                  max="100" /></div
+              ><div class="range"
+                ><label for="layerScale">Size<output id="layerScaleValue"></output></label
+                ><input id="layerScale" data-layer="scale" type="range" min="1" max="400" /></div
+              ><div class="range"
+                ><label for="layerRotation">Rotation<output id="layerRotationValue"></output></label
+                ><input
+                  id="layerRotation"
+                  data-layer="rotation"
+                  type="range"
+                  min="-180"
+                  max="180" /></div
+              ><div class="two-fields"
+                ><label class="field"
+                  >Across · X<input
+                    id="layerX"
+                    data-layer="x"
+                    type="number"
+                    min="-2400"
+                    max="3600" /></label
+                ><label class="field"
+                  >Down · Y<input
+                    id="layerY"
+                    data-layer="y"
+                    type="number"
+                    min="-2400"
+                    max="3600" /></label
+              ></div>
+              <div class="button-row"
+                ><button id="centreLayer">Centre</button
+                ><button id="fitLayer">Fit to page</button></div
+              >
+              <div class="button-row"
+                ><label class="check"
+                  ><input id="layerFlipX" data-layer="flipX" type="checkbox" />Flip ↔</label
+                ><label class="check"
+                  ><input id="layerFlipY" data-layer="flipY" type="checkbox" />Flip ↕</label
+                ></div
+              >
+              <label class="field"
+                >Mix with layers below<select id="layerBlend" data-layer="blend"
+                  ><option value="source-over">Normal</option
+                  ><option value="multiply">Multiply · darker ink</option
+                  ><option value="screen">Screen · lighter ink</option
+                  ><option value="overlay">Overlay · punchier</option
+                  ><option value="darken">Darken</option
+                  ><option value="lighten">Lighten</option
+                  ><option value="difference">Difference · odd colours</option></select
+                ></label
+              >
+              <details class="extras"
+                ><summary>Move just this layer</summary>
+                <label class="field"
+                  >Movement<select id="layerMotion" data-layer="motion"
+                    ><option value="none">Stay put</option
+                    ><option value="float">Little float</option
+                    ><option value="swing">Gentle swing</option
+                    ><option value="pulse">Slow breath</option
+                    ><option value="spin">Full turn</option></select
+                  ></label
+                ><div class="range"
+                  ><label for="layerAmount"
+                    >Movement amount<output id="layerAmountValue"></output></label
+                  ><input
+                    id="layerAmount"
+                    data-layer="amount"
+                    type="range"
+                    min="0"
+                    max="100" /></div
+                ><div class="range"
+                  ><label for="layerOffset"
+                    >Cycle offset<output id="layerOffsetValue"></output></label
+                  ><input
+                    id="layerOffset"
+                    data-layer="offset"
+                    type="range"
+                    min="0"
+                    max="100" /></div
+                ><p class="hint" id="layerMotionHint"></p></details></div
+          ></section>
+          <section
+            ><h2>The sheet underneath</h2>
+            <label class="field"
+              >Page shape<select id="canvasPreset"
+                ><option value="">Choose a size…</option
+                ><option value="960x640">Landscape · 960 × 640</option
+                ><option value="800x800">Square · 800 × 800</option
+                ><option value="640x960">Portrait · 640 × 960</option
+                ><option value="1280x720">Wide · 1280 × 720</option
+                ><option value="1920x1080">Full HD · 1920 × 1080</option
+                ><option value="1440x1440">Large square · 1440 × 1440</option
+                ><option value="1080x1920">Tall HD · 1080 × 1920</option
+                ><option value="512x342">Compact · 512 × 342</option
+                ><option value="32x32">Tiny pixels · 32 × 32</option
+                ><option value="64x64">Small pixels · 64 × 64</option
+                ><option value="128x128">Pixel square · 128 × 128</option
+                ><option value="256x144">Pixel widescreen · 256 × 144</option
+                ><option value="256x256">Large pixels · 256 × 256</option></select
+              ></label
+            >
+            <div class="two-fields"
+              ><label class="field"
+                >Width<input id="sceneWidth" type="number" min="16" max="2048" /></label
+              ><label class="field"
+                >Height<input id="sceneHeight" type="number" min="16" max="2048" /></label></div
+            ><button id="applyCanvas">Resize sheet</button>
+            <p class="hint"
+              >Layers keep their size and stay centred together. Anything outside the sheet is
+              clipped in the print.</p
+            >
+            <label class="field">Paper colour<input id="scenePaper" type="color" /></label>
+            <label class="check"><input id="sceneClear" type="checkbox" />Transparent sheet</label>
+            <p class="hint"
+              >For a transparent export, also turn on Keep source transparency in Print.</p
+            ></section
+          ></div
+        ><div class="panel" data-panel="play" hidden
+          ><section
+            ><h2>Something to start with</h2
+            ><p class="hint"
+              >Four little drawings made with Wobble brushes, with a little movement built in.
+              Choose one to replace the composition. Save your project first if you want to keep it.
+              Editable Wobble originals are in the download.</p
+            ><div class="studies"
+              ><button data-demo="morning"
+                ><b>☕ A quiet morning</b><span>Steam, stripes and a warm cup.</span></button
+              ><button data-demo="pear"
+                ><b>◒ The wonky pear</b><span>Soft shading for dots and grain.</span></button
+              ><button data-demo="type"
+                ><b>Aa Make some noise</b><span>Big brush letters with a little sway.</span></button
+              ><button data-demo="hills"
+                ><b>⌁ Faraway hills</b
+                ><span>Pencil ridges, warm sun and passing birds.</span></button
+              ></div
+            ></section
+          ><section
+            ><h2>Quick recipes</h2
+            ><div class="studies"
+              ><button data-recipe="picnic">A picnic in two patterns</button
+              ><button data-recipe="late">Last bus home</button
+              ><button data-recipe="signal">Bad signal, good print</button
+              ><button data-recipe="news">Yesterday's paper</button
+              ><button data-recipe="green">Pocket computer</button
+              ><button data-recipe="sea">Wavy postcard</button
+              ><button data-recipe="type">A note in the margin</button></div
+            ><p class="hint">Recipes change the print settings and keep your image.</p></section
+          ><section
+            ><h2>Write your own</h2
+            ><label class="field"
+              >A few words<textarea id="words" rows="3" maxlength="80">
+MAKE\nSOME\nNOISE.</textarea
+              ></label
+            ><button id="makeText">Add these words</button></section
+          ></div
+        >
+        <div class="inspector-foot"
+          ><span>Made for a bit of experimenting.</span
+          ><button id="themeHelp">Themes &amp; shortcuts ↗</button></div
+        ></aside
+      >
+    </main>
+    <input id="sequenceFile" type="file" accept=".zip,application/zip" hidden /><input
+      id="imageFile"
+      type="file"
+      accept="image/png,image/jpeg,image/webp"
+      hidden
+    /><input id="projectFile" type="file" accept=".jagodither,application/json" hidden /><input
+      id="recipeFile"
+      type="file"
+      accept=".ditherrecipe,application/json"
+      hidden
+    />
+    <dialog id="colourPanel" aria-labelledby="colourTitle"
+      ><div class="dialog-top"
+        ><h2 id="colourTitle">A little ink</h2
+        ><button data-close aria-label="Close ink picker">×</button></div
+      ><canvas
+        id="colourWheel"
+        width="256"
+        height="256"
+        aria-label="Hue ring and shade square"
+      ></canvas
+      ><label class="field">Hex<input id="colourHex" maxlength="7" spellcheck="false" /></label
+      ><div class="rgb-row"
+        ><label>R<input id="red" type="number" min="0" max="255" /></label
+        ><label>G<input id="green" type="number" min="0" max="255" /></label
+        ><label>B<input id="blue" type="number" min="0" max="255" /></label></div
+      ><p class="hint">Changes apply as you pick. Keep experimenting.</p></dialog
+    >
+    <dialog id="exportDialog"
+      ><div class="dialog-top"
+        ><h2>Send it out into the world.</h2
+        ><button data-close aria-label="Close export">×</button></div
+      ><label class="field"
+        >File type<select id="exportFormat"
+          ><option value="png">PNG · this frame</option
+          ><option value="gif">GIF · animated loop</option
+          ><option value="frames">PNG frames · ZIP</option
+          ><option value="jago">Wobble project · animated .jago</option
+          ><option value="text">Text · character grid</option></select
+        ></label
+      ><label class="field"
+        >Pixel enlargement<select id="exportScale"
+          ><option value="1">1× · print resolution</option
+          ><option value="2">2× · bigger pixels</option
+          ><option value="4">4× · poster pixels</option></select
+        ></label
+      ><label class="field"
+        >What to show<select id="exportView"
+          ><option value="print">The finished print</option
+          ><option value="split">Before / after · current divider</option
+          ><option value="pair">Before / after · side by side</option
+          ><option value="wipe">Before / after · moving reveal</option></select
+        ></label
+      >
+      <label id="bridgeField" class="field" hidden
+        >Wobble transfer rate<select id="bridgeRate"
+          ><option value="3">3 fps · longer loops</option
+          ><option value="4">4 fps · up to 12 seconds</option
+          ><option value="6" selected>6 fps · up to 8 seconds</option
+          ><option value="12">12 fps · up to 4 seconds</option
+          ><option value="24">24 fps · up to 2 seconds</option></select
+        ></label
+      >
+      <p class="hint" id="overlayExportHint" hidden
+        >After-print overlays keep their own colours in image and animation exports. Wobble transfer
+        uses a combined print layer while they are visible, so those colours stay intact. Plain text
+        exports leave them out.</p
+      ><label id="separateInksField" class="check" hidden
+        ><input id="separateInks" type="checkbox" />Separate ink layers in Wobble</label
+      ><p id="exportInfo" class="hint"></p
+      ><p class="hint"
+        >The moving reveal travels across your print and back in GIFs and PNG sequences. Wobble
+        receives the finished print as flattened frames, ready to draw over.</p
+      ><progress id="exportProgress" max="1" value="0" hidden></progress
+      ><div class="button-row"
+        ><button id="cancelExport" hidden>Cancel export</button
+        ><button id="doExport" class="primary">Save print</button></div
+      ></dialog
+    >
+    <dialog id="newSheetDialog"
+      ><div class="dialog-top"
+        ><h2>Fresh paper.</h2><button data-close aria-label="Close new page">×</button></div
+      >
+      <p>Save your current project first if you want to keep it. New pages can also be undone.</p>
+      <label class="field"
+        >Canvas size<select id="newSheetPreset"
+          ><option value="960,640">Landscape · 960 × 640</option
+          ><option value="800,800">Square · 800 × 800</option
+          ><option value="640,960">Portrait · 640 × 960</option
+          ><option value="1280,720">Wide · 1280 × 720</option
+          ><option value="1920,1080">Full HD · 1920 × 1080</option
+          ><option value="1440,1440">Large square · 1440 × 1440</option
+          ><option value="1080,1920">Tall HD · 1080 × 1920</option
+          ><option value="512,342">Compact · 512 × 342</option
+          ><option value="32,32">Tiny pixels · 32 × 32</option
+          ><option value="64,64">Small pixels · 64 × 64</option
+          ><option value="128,128">Pixel square · 128 × 128</option
+          ><option value="256,144">Pixel widescreen · 256 × 144</option
+          ><option value="256,256">Large pixels · 256 × 256</option
+          ><option value="custom">Your own size</option></select
+        ></label
+      >
+      <div class="two-fields"
+        ><label class="field"
+          >Width<input id="newSheetWidth" type="number" min="16" max="2048" value="960" /></label
+        ><label class="field"
+          >Height<input id="newSheetHeight" type="number" min="16" max="2048" value="640" /></label
+      ></div>
+      <label class="field"
+        >Paper colour<input id="newSheetPaper" type="color" value="#fcf6e7"
+      /></label>
+      <label class="check"><input id="newSheetClear" type="checkbox" />Transparent sheet</label>
+      <label class="field"
+        >Starting mark size<select id="newSheetCell"
+          ><option value="1">1 px</option
+          ><option value="2">2 px</option
+          ><option value="3">3 px</option
+          ><option value="4">4 px</option
+          ><option value="6">6 px</option
+          ><option value="8">8 px</option
+          ><option value="12">12 px</option
+          ><option value="16">16 px</option
+          ><option value="24">24 px</option></select
+        ></label
+      >
+      <p class="hint"
+        >Print style and inks stay as you left them. Mark size is measured at the print resolution,
+        which you can change in Print. Page sizes match Wobble. Resize the paper later in Layers
+        without stretching your artwork.</p
+      >
+      <div class="dialog-actions"
+        ><button data-close>Cancel</button
+        ><button id="createSheet" class="primary">Create page</button></div
+      ></dialog
+    >
+    <dialog id="helpDialog">
+      <div class="dialog-top"
+        ><h2>Welcome to the print table.</h2
+        ><button data-close aria-label="Close help">×</button></div
+      >
+      <label class="field"
+        >Application theme<select id="theme" aria-label="Workspace theme">
+          <option value="sketchbook">Sketchbook</option
+          ><option value="charcoal">Charcoal</option
+          ><option value="paper">Warm Paper</option
+          ><option value="plum">Midnight Plum</option
+          ><option value="candy">Candy Cloud</option></select
+        ></label
+      >
+      <p class="hint">Changes the workspace colours only. Your artwork keeps its own inks.</p>
+      <p
+        >Bring a picture, some words or a moving sketch. Try a print style, mix a few inks, and see
+        where it takes you. The little drawings under Try it are a good place to start.</p
+      >
+      <h3>Make yourself at home</h3>
+      <p
+        >Scroll over the page to zoom. Choose Pan (H) and drag, or use the middle mouse button.
+        Press 0 to fit the page again. In Layers, click a picture or text layer to select it, drag
+        inside to move it, drag a corner to resize, or use the round handle to rotate. Hold Shift
+        for straight moves or 15° turns.</p
+      >
+      <p
+        >New gives you a fresh page. Change its size later in Layers → The sheet underneath. Layers
+        keep their size; the paper crops what you see without deleting the artwork beyond its
+        edges.</p
+      >
+      <h3>Two studios, one little experiment</h3>
+      <p
+        ><b>Wobble → Dither:</b> export a PNG sequence ZIP from Jago Wobble Studio, then choose
+        Layers → + Wobble loop here. Add printing textures, colour and lettering to the moving
+        drawing.</p
+      >
+      <p
+        ><b>Dither → Wobble:</b> export a Wobble project and open its .jago file in Wobble. Choose
+        one printed layer or Separate ink layers, then draw over it. Keep your .jagodither original
+        for editing the text and print settings.</p
+      >
+      <p class="hint"
+        >Loops can be up to 12 seconds. The return trip supports up to 48 frames; lower the transfer
+        rate for longer loops. The export panel helps you choose.</p
+      >
+      <h3>Keep the good bits</h3>
+      <p
+        >Save keeps the whole project as .jagodither. A recipe keeps settings only. Export PNGs,
+        GIFs, frame sequences, a before/after comparison or a Wobble project. Typewriter club also
+        exports text. There is no automatic project backup, so save anything you want to keep.</p
+      >
+      <details
+        ><summary>A few handy shortcuts</summary
+        ><table class="keys"
+          ><tbody>
+            <tr><th>Ctrl / ⌘ + S / O / E</th><td>Save / open / export</td></tr>
+            <tr><th>Ctrl / ⌘ + Z</th><td>Undo; add Shift to redo</td></tr>
+            <tr><th>Space</th><td>Play / pause</td></tr>
+            <tr><th>Wheel / H + drag / 0</th><td>Zoom / pan / fit</td></tr>
+            <tr><th>B / R</th><td>Before and after / reverse inks</td></tr>
+            <tr><th>[ / ]</th><td>Smaller / bigger marks</td></tr>
+            <tr><th>, / .</th><td>Previous / next frame</td></tr>
+            <tr><th>1–5</th><td>Print / Ink / Move / Layers / Try it</td></tr>
+            <tr><th>Arrows / Shift + arrows</th><td>Nudge layer / nudge by ten</td></tr>
+            <tr><th>Ctrl / ⌘ + D / Delete</th><td>Duplicate / remove selected layer</td></tr>
+            <tr><th>Escape</th><td>Cancel a layer drag</td></tr>
+          </tbody></table
+        ></details
+      >
+      <h3>Overlays, without drawing a whole new picture</h3>
+      <p
+        >In Layers, choose <b>+ Overlay</b> for stars, sparkles, soft lights or dust. Its own
+        settings appear just below the layer name. Use Before dithering for printed texture, or
+        After dithering for clean colour above the print. For a custom drawing, make it in Wobble
+        and bring the loop across.</p
+      >
+      <h3>About &amp; support</h3>
+      <p>Created by Cameron Jago Lis Illustrates.</p>
+      <p class="help-links"
+        ><a href="https://cameronjagolis.co.uk/" target="_blank" rel="noopener"
+          >Illustration website</a
+        >
+        ·
+        <a href="https://ko-fi.com/cameronillustrates" target="_blank" rel="noopener"
+          >Buy me a cuppa</a
+        >
+        ·
+        <a href="https://github.com/snowwy123/Jago-Dither-Studio" target="_blank" rel="noopener"
+          >GitHub</a
+        ></p
+      >
+      <p
+        >Support is optional and helps Cameron develop Jago Dither Studio. All the print and
+        animation tools stay free.</p
+      >
+      <p
+        >Your pictures are processed on your device. No accounts or uploads. If you make something
+        with it, I'd love to see it!</p
+      >
+      <h3>Open source. Free forever.</h3>
+      <p>All the tools are free, and the source is available under the MIT License.</p>
+      <p
+        >Version 1.0.0 · Windows &amp; browser. Save your prints and layers as .jagodither
+        projects.</p
+      >
+      <p class="hint"
+        >Microsoft WebView2 licences and notices are included with the Windows app. See Credits.md
+        for credits.</p
+      >
+    </dialog>
+    <div id="toast" role="status"></div>
+    <script>
+      /* ENGINE */</script
+    ><script>
+      /* DEMOS */</script
+    ><script>
+      /* CODECS */</script
+    ><script>
+      /* APP */
+    </script>
+  </body></html
+>

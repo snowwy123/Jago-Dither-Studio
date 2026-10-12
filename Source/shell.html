@@ -360,9 +360,10 @@
                 spellcheck="false"
                 aria-describedby="charsHint"
               /><span id="charsHint" class="hint"
-                >2–16 characters. Start with a space for the lightest areas.</span
+                >2–16 characters, lightest first and darkest last. Updates as you type. Dense marks need dark tones.</span
               ></label
             >
+            <label class="field" id="asciiStretchField" hidden><span><input type="checkbox" id="asciiStretch" data-setting="asciiStretch" /> Use artwork’s full tonal range</span><span class="hint">Spread this picture’s light and dark tones across your character list. Useful when a pale image only uses a few marks.</span></label>
             <label class="field"
               >Print resolution<select id="width" data-setting="width"
                 ><option value="320">320 px · quick sketch</option
@@ -670,7 +671,7 @@
             <div class="button-row"
               ><button id="addLayerImage">+ Image</button><button id="addText">+ Text</button
               ><button id="addOverlay">+ Overlay</button><button id="addGradient">+ Gradient</button
-              ><button id="importLoop">+ Wobble loop</button></div
+              ><button id="importLoop">+ PNG loop</button></div
             >
             <p class="hint"
               >Stack images, loops, lettering and overlays. Top of each print stage is front of the
@@ -1064,7 +1065,7 @@ MAKE\nSOME\nNOISE.</textarea
         >
         <div class="inspector-foot"
           ><span>Made for a bit of experimenting.</span
-          ><button id="themeHelp">Themes &amp; shortcuts ↗</button></div
+          ><button id="themeHelp">Appearance &amp; shortcuts</button></div
         ></aside
       >
     </main>
@@ -1234,21 +1235,6 @@ MAKE\nSOME\nNOISE.</textarea
         keep their size; the paper crops what you see without deleting the artwork beyond its
         edges.</p
       >
-      <h3>Two studios, one little experiment</h3>
-      <p
-        ><b>Wobble → Dither:</b> export a PNG sequence ZIP from Jago Wobble Studio, then choose
-        Layers → + Wobble loop here. Add printing textures, colour and lettering to the moving
-        drawing.</p
-      >
-      <p
-        ><b>Dither → Wobble:</b> export a Wobble project and open its .jago file in Wobble. Choose
-        one printed layer or Separate ink layers, then draw over it. Keep your .jagodither original
-        for editing the text and print settings.</p
-      >
-      <p class="hint"
-        >Loops can be up to 12 seconds. The return trip supports up to 48 frames; lower the transfer
-        rate for longer loops. The export panel helps you choose.</p
-      >
       <h3>Keep the good bits</h3>
       <p
         >Save keeps the whole project as .jagodither. A recipe keeps settings only. Export PNGs,
@@ -1277,8 +1263,7 @@ MAKE\nSOME\nNOISE.</textarea
       <p
         >In Layers, choose <b>+ Overlay</b> for stars, sparkles, soft lights or dust. Its own
         settings appear just below the layer name. Use Before dithering for printed texture, or
-        After dithering for clean colour above the print. For a custom drawing, make it in Wobble
-        and bring the loop across.</p
+        After dithering for clean colour above the print. For a custom drawing, make it in Wobble and use Send to studio.</p
       >
       <h3>About &amp; support</h3>
       <p>Created by Cameron Jago Lis Illustrates.</p>
@@ -1306,7 +1291,7 @@ MAKE\nSOME\nNOISE.</textarea
       <h3>Open source. Free forever.</h3>
       <p>All the tools are free, and the source is available under the MIT License.</p>
       <p
-        >Version 1.0.0 · Windows &amp; browser. Save your prints and layers as .jagodither
+        >Version 1.1.1 · Windows &amp; browser. Save your prints and layers as .jagodither
         projects.</p
       >
       <p class="hint"

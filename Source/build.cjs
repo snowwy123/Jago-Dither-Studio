@@ -9,7 +9,7 @@ const dir = __dirname,
 let html = read('shell.html');
 for (const [marker, content] of [
   ['STYLE', read('style.css')],
-  ['ENGINE', read('engine.js')],
+  ['ENGINE', read('riso.js')+'\n'+read('engine.js')],
   [
     'DEMOS',
     'const starterArt = ' +
@@ -21,7 +21,7 @@ for (const [marker, content] of [
   [
     'APP',
     'const engineSource = ' +
-      JSON.stringify(read('engine.js')) +
+      JSON.stringify(read('riso.js')+'\n'+read('engine.js')) +
       ';\n' +
       read('app.js') +
       '\n' +
@@ -31,7 +31,7 @@ for (const [marker, content] of [
       '\n' +
       read('alignment.js') +
       '\n' +
-      read('features.js')
+      read('features.js') + '\n' + read('suite-bridge.js') + '\n' + read('suite-adapter.js') + '\n' + read('suite-round.js')+'\n'+read('print-bench.js')+'\n'+read('explore.js')
   ]
 ]) {
   const slot = '/* ' + marker + ' */';
@@ -43,3 +43,4 @@ for (const match of html.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script\s*>/g))
 for (const name of ['index.html', 'Jago-Dither-Studio.html'])
   fs.writeFileSync(path.join(root, name), html);
 console.log('Built browser and offline app.');
+

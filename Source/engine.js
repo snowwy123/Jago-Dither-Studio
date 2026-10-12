@@ -2,6 +2,7 @@
 // Copyright (c) 2026 Cameron Jago Lis Illustrates.
 (function (root) {
   'use strict';
+  const Riso = typeof module !== 'undefined' ? require('./riso.js') : root.JagoRiso;
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
   const methods = [
     'bayer16',
@@ -33,6 +34,7 @@
   ];
   const motions = ['none', 'drift', 'ripple', 'sway', 'breathe', 'crawl', 'zoom', 'twist'];
   const defaults = {
+    riso: Riso.defaults,
     method: 'bayer4',
     cell: 3,
     width: 720,
@@ -50,11 +52,13 @@
     seconds: 3,
     fps: 12,
     chars: ' .:-=+*#%@',
+    asciiStretch: false,
     patternScale: 1,
     patternAngle: 0,
     edge: 0,
     posterize: 0,
     grain: 0,
+    selective: {mode: "off", colours: [], tolerance: 0, retain: "palette"},
     reverseInks: false,
     mapMode: 'off',
     mapColours: ['#302547', '#db7960', '#fff1bd'],
@@ -119,6 +123,7 @@
   function settings(value) {
     if (!value || typeof value !== 'object') throw Error('This file has no settings.');
     const s = { ...defaults, ...value };
+    if (typeof s.asciiStretch !== 'boolean') throw Error('Invalid character tone range.');
     for (const [key, [min, max]] of Object.entries(limits)) {
       if (typeof s[key] !== 'number' || !Number.isFinite(s[key]) || s[key] < min || s[key] > max)
         throw Error('Invalid ' + key + ' setting.');
@@ -176,6 +181,9 @@
       s.mapColours.some((c) => typeof c !== 'string' || !/^#[\da-f]{6}$/i.test(c))
     )
       throw Error('Invalid gradient colours.');
+    if(!s.selective||!["off","include","exclude"].includes(s.selective.mode)||!["palette","source"].includes(s.selective.retain)||!Array.isArray(s.selective.colours)||s.selective.colours.length>16||s.selective.colours.some(c=>typeof c!=="string"||!/^#[0-9a-f]{6}$/i.test(c))||!Number.isFinite(s.selective.tolerance)||s.selective.tolerance<0||s.selective.tolerance>100)throw Error("Invalid selective colour rules");
+    s.selective={...s.selective,colours:[...s.selective.colours]};
+    s.riso=Riso.settings(s.riso);
     return Object.fromEntries(
       Object.keys(defaults).map((k) => [k, Array.isArray(s[k]) ? [...s[k]] : s[k]])
     );
@@ -321,6 +329,7 @@
       source.data.length !== sw * sh * 4
     )
       throw Error('Invalid source image.');
+    if(s.riso.enabled)return Riso.render(source,s,phase);
     const ratio = s.width / Math.max(sw, sh),
       ow = Math.max(1, Math.round(sw * ratio)),
       oh = Math.max(1, Math.round(sh * ratio));
@@ -329,6 +338,7 @@
       ch = s.method === 'ascii' ? cw * 1.5 : cw;
     const w = Math.max(1, Math.ceil(ow / cw)),
       h = Math.max(1, Math.ceil(oh / ch));
+    const rawSamples=s.selective.mode!=="off"?new Float32Array(w*h*3):null;
     const samples = new Float32Array(w * h * 3),
       alpha = new Uint8Array(w * h),
       palette = inkColours(s).map(rgb);
@@ -406,6 +416,7 @@
           grey = luma(sum) / 4;
         alpha[i] = sum[3] / 4;
         for (let c = 0; c < 3; c++) {
+          if(rawSamples)rawSamples[i*3+c]=sum[c]/4;
           let v = grey + ((sum[c] / 4 - grey) * s.saturation) / 100;
           v = (v - 127.5) * contrast + 127.5 + s.brightness * 2.55;
           if (s.motion === 'breathe') v += Math.sin(angle) * s.amount * 2;
@@ -475,6 +486,15 @@
         for (let c = 0; c < 3; c++)
           samples[i * 3 + c] = palette[a][c] * (1 - f) + palette[a + 1][c] * f;
       }
+    }
+    let asciiLow = 0, asciiHigh = 255;
+    if (s.method === 'ascii' && s.asciiStretch) {
+      let low = Infinity, high = -Infinity;
+      for (let i = 0; i < w * h; i++) if (alpha[i] > 0) {
+        const value = luma(samples.subarray(i * 3, i * 3 + 3));
+        low = Math.min(low, value); high = Math.max(high, value);
+      }
+      if (high - low > 1) { asciiLow = low; asciiHigh = high; }
     }
     const out = new Uint8ClampedArray(w * h * 4),
       glyphs = s.method === 'ascii' ? [] : null;
@@ -597,7 +617,7 @@
           : color;
         out.set([...printed, s.transparent ? alpha[i] : 255], i * 4);
         if (glyphs) {
-          const tone = clamp(luma(value) / 255, 0, 1);
+          const tone = clamp((luma(value) - asciiLow) / (asciiHigh - asciiLow), 0, 1);
           glyphs[i] = chars[Math.round((1 - tone) * (chars.length - 1))];
           out.set(
             [...(s.reverseInks ? sorted.at(-1) : sorted[0]), s.transparent ? alpha[i] : 255],
@@ -617,7 +637,10 @@
         }
       }
     }
+    const protectedCells=rawSamples?new Uint8Array(w*h):null;
+    if(rawSamples){const colours=s.selective.colours.map(rgb),distance=(a,b)=>(a[0]-b[0])**2+(a[1]-b[1])**2+(a[2]-b[2])**2,threshold=(s.selective.tolerance/100*441.673)**2;for(let i=0;i<w*h;i++){const raw=Array.from(rawSamples.subarray(i*3,i*3+3)),picked=colours.some(c=>distance(raw,c)<=threshold+.001),apply=s.selective.mode==="include"?picked:!picked;if(apply)continue;protectedCells[i]=1;const colour=s.selective.retain==="source"?raw:palette.reduce((best,c)=>distance(raw,c)<distance(raw,best)?c:best,palette[0]);out.set([...colour,s.transparent?alpha[i]:255],i*4);}}
     return {
+      protectedCells,
       data: out,
       width: w,
       height: h,

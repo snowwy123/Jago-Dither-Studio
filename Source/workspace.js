@@ -17,11 +17,12 @@ let composingKey = '',
   composingCanvas = null,
   layerDrag = null;
 const uid = () => crypto.randomUUID();
-const pixelsOf = (c) => ({
-  width: c.width,
-  height: c.height,
-  data: c.getContext('2d', { willReadFrequently: true }).getImageData(0, 0, c.width, c.height).data
-});
+let sampledCanvas=null,sampledPixels=null;
+const pixelsOf = c => {
+  if(c===composingCanvas&&c===sampledCanvas&&sampledPixels)return sampledPixels;
+  const value={width:c.width,height:c.height,data:c.getContext('2d',{willReadFrequently:true}).getImageData(0,0,c.width,c.height).data};
+  if(c===composingCanvas){sampledCanvas=c;sampledPixels=value;}return value;
+};
 const selectedLayer = () => scene.layers.find((l) => l.id === scene.active);
 function sceneMoves(printedOnly = false) {
   return scene.layers.some(
@@ -94,7 +95,7 @@ function layerPose(l, t) {
   return { x, y, angle, scale };
 }
 function compose(t) {
-  const key = JSON.stringify(scene) + (sceneMoves(true) ? t : 0);
+  const key = JSON.stringify({...scene,active:undefined}) + (sceneMoves(true) ? t : 0);
   if (key === composingKey && composingCanvas) return composingCanvas;
   const c = makeCanvas(scene.width, scene.height),
     g = c.getContext('2d');
@@ -932,6 +933,8 @@ async function exportPrint() {
             JSON.stringify(
               {
                 format: 'jago-png-sequence',
+                sourceStudio:'dither',
+                sourceProjectId:scene.suiteProjectId || crypto.randomUUID(),
                 version: 1,
                 name: sourceName,
                 width: w,

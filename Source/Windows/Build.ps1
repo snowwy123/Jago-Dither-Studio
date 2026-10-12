@@ -18,7 +18,7 @@ $compileArgs=@('/nologo','/target:winexe','/platform:x64','/optimize+','/utf8out
     ('/out:'+(Join-Path $suiteRoot 'Jago-Dither-Studio.exe')),
     ('/win32icon:'+(Join-Path $PSScriptRoot 'studio.ico')),
     ('/win32manifest:'+(Join-Path $PSScriptRoot 'app.manifest')),
-    '/reference:System.dll','/reference:System.Core.dll','/reference:System.Drawing.dll','/reference:System.Windows.Forms.dll',
+    '/reference:System.Web.Extensions.dll','/reference:System.Security.dll','/reference:System.dll','/reference:System.Core.dll','/reference:System.Drawing.dll','/reference:System.Windows.Forms.dll',
     ('/reference:'+(Join-Path $sdk 'lib\net462\Microsoft.Web.WebView2.Core.dll')),
     ('/reference:'+(Join-Path $sdk 'lib\net462\Microsoft.Web.WebView2.WinForms.dll')))
 $resources=@{
@@ -30,7 +30,13 @@ $resources=@{
     'WebView2-NOTICE.txt'=(Join-Path $sdk 'NOTICE.txt')
 }
 foreach($name in $resources.Keys){$compileArgs+='/resource:'+$resources[$name]+',Dither.'+$name}
-$compileArgs+=(Join-Path $PSScriptRoot 'App.cs')
+$compileArgs+=(Join-Path $PSScriptRoot 'App.cs');$compileArgs+=(Join-Path $PSScriptRoot 'JagoSuiteHost.cs')
 & $compiler @compileArgs
 if($LASTEXITCODE -ne 0){throw 'Windows build failed.'}
 Write-Output 'Windows app rebuilt.'
+
+# Short public filename; the development alias keeps older local scripts working.
+try { Copy-Item -LiteralPath (Join-Path $suiteRoot 'Jago-Dither-Studio.exe') -Destination (Join-Path $suiteRoot 'Jago-Dither.exe') -Force } catch [System.IO.IOException] { Write-Warning ('The short-name executable is open. The rebuilt development executable is ready; close the app before replacing its running copy. ' + $_.Exception.Message) }
+
+
+Copy-Item -LiteralPath (Join-Path $suiteRoot 'Jago-Dither-Studio.html') -Destination (Join-Path $suiteRoot 'Jago-Dither.html') -Force

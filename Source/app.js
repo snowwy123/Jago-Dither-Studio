@@ -68,7 +68,7 @@ const workerURL = URL.createObjectURL(
   new Blob(
     [
       engineSource,
-      '\nlet source; onmessage=e=>{ const m=e.data; try { if(m.type==="source"){source=m.source;postMessage({id:m.id,ok:true});}else{ const out=Dither.render(m.source || source,m.opts,m.phase);postMessage({id:m.id,out},[out.data.buffer]);}}catch(error){postMessage({id:m.id,error:error.message});}}'
+      '\nlet source; onmessage=e=>{ const m=e.data; try { if(m.type==="source"){source=m.source;postMessage({id:m.id,ok:true});}else{ if(m.source)source=m.source; const out=Dither.render(source,m.opts,m.phase);postMessage({id:m.id,out},[out.data.buffer]);}}catch(error){postMessage({id:m.id,error:error.message});}}'
     ],
     { type: 'text/javascript' }
   )
@@ -89,11 +89,12 @@ worker.onerror = () => {
   jobs.clear();
   toast('The print worker stopped. Please reopen the app.');
 };
+let sentWorkerSource=null;
 function callWorker(data) {
   return new Promise((resolve, reject) => {
     const id = ++job;
     jobs.set(id, { resolve, reject });
-    worker.postMessage({ ...data, id });
+    const message={...data,id};if(data.source&&data.source===sentWorkerSource)delete message.source;else if(data.source)sentWorkerSource=data.source;worker.postMessage(message);
   });
 }
 function toast(text) {
@@ -197,6 +198,7 @@ function sync() {
         }[key] || '');
   }
   $('charsField').hidden = opts.method !== 'ascii';
+  $('asciiStretchField').hidden = opts.method !== 'ascii';
   $('strength').disabled = ['threshold', 'ascii'].includes(opts.method);
   for (const id of ['patternScale', 'patternAngle'])
     $(id).disabled = ![
@@ -258,7 +260,7 @@ function renderPalette() {
 function requestPrint() {
   if (!source) return;
   revision++;
-  pending = { opts: copy(opts), phase, rev: revision };
+  pending = { opts: copy(opts), phase, rev: revision, sceneKey:JSON.stringify(scene) };
   pump();
 }
 async function pump() {
@@ -275,7 +277,7 @@ async function pump() {
       opts: request.opts,
       phase: request.phase
     });
-    if (request.rev === revision) {
+    if (request.rev === revision || (playing&&request.sceneKey===JSON.stringify(scene)&&JSON.stringify(request.opts)===JSON.stringify(opts))) {
       latest = out;
       paintOutput(result, out, 1, request.phase);
       sourceCanvas = composed;
@@ -286,7 +288,7 @@ async function pump() {
       $('dimensions').title =
         'Resize page · print output ' + out.outputWidth + ' × ' + out.outputHeight;
       $('renderTime').textContent = Math.round(performance.now() - started) + ' ms';
-      $('statusText').textContent = playing
+      $('statusText').textContent = opts.riso.enabled?'Layered inks / '+opts.riso.screen+' screen':playing
         ? 'Looping on the print table'
         : methodHints[opts.method].split('.')[0] + '.';
     }
@@ -317,7 +319,7 @@ function paintOutput(canvas, out, scale, t = null) {
       for (let x = 0; x < out.width; x++) {
         const i = y * out.width + x;
         g.fillStyle = `rgba(${out.data[i * 4]},${out.data[i * 4 + 1]},${out.data[i * 4 + 2]},${out.data[i * 4 + 3] / 255})`;
-        g.fillText(out.glyphs[i], (x + 0.5) * cw, (y + 0.5) * ch, cw);
+        if(out.protectedCells?.[i])g.fillRect(x*cw,y*ch,cw,ch);else g.fillText(out.glyphs[i], (x + 0.5) * cw, (y + 0.5) * ch, cw);
       }
   } else {
     const small = document.createElement('canvas');
@@ -427,7 +429,15 @@ document.querySelectorAll('[data-setting]').forEach((input) => {
       sync();
     }
   };
-  if (input.type === 'range') {
+  if (input.dataset.setting === 'chars') {
+    input.oninput = () => {
+      const value = input.value;
+      if ([...value].length < 2 || [...value].length > 16 || /[\r\n\t]/.test(value)) return;
+      opts = Dither.settings({ ...opts, chars: value });
+      requestPrint();
+    };
+    input.onchange = () => { update(); remember(); };
+  } else if (input.type === 'range') {
     input.oninput = update;
     input.onchange = remember;
   } else

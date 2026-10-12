@@ -17,8 +17,8 @@ using Microsoft.Web.WebView2.WinForms;
 [assembly: AssemblyProduct("Jago Dither Studio")]
 [assembly: AssemblyCompany("Cameron Jago Lis Illustrates")]
 [assembly: AssemblyCopyright("Copyright (c) 2026 Cameron Jago Lis Illustrates")]
-[assembly: AssemblyVersion("1.0.0.0")]
-[assembly: AssemblyFileVersion("1.0.0.0")]
+[assembly: AssemblyVersion("1.6.0.0")]
+[assembly: AssemblyFileVersion("1.6.0.0")]
 static class Program
 {
     internal static string Root, Files, Test;
@@ -29,8 +29,9 @@ static class Program
     {
         try
         {
-            Test = args.Length==2 && args[0]=="--self-test" ? Path.GetFullPath(args[1]) : null;
-            Root = Test ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Jago Dither Studio");
+            if(JagoSuiteBootstrap.ForwardExisting("dither",args))return;
+            Test = JagoSuiteBootstrap.TestRoot(args) ?? (args.Length==2 && args[0]=="--self-test" ? Path.GetFullPath(args[1]) : null);
+            Root = Test ?? JagoSuiteBootstrap.WorkspaceProfile ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Jago Dither Studio");
             string version;
             using(var sha=SHA256.Create()) using(var stream=File.OpenRead(Assembly.GetExecutingAssembly().Location))
                 version=BitConverter.ToString(sha.ComputeHash(stream)).Replace("-", "").Substring(0,16);
@@ -63,7 +64,7 @@ sealed class PrintWindow:Form
     bool ready, closing, testing;
     public PrintWindow()
     {
-        Text="Jago Dither Studio";ClientSize=new Size(1360,900);MinimumSize=new Size(800,620);
+        Text="Jago Dither";ClientSize=new Size(1360,900);MinimumSize=new Size(800,620);
         Icon=Icon.ExtractAssociatedIcon(Assembly.GetExecutingAssembly().Location);
         browser.Dock=DockStyle.Fill;Controls.Add(browser);Shown+=async(s,e)=>await Initialise();
         FormClosing+=async(s,e)=>{
@@ -137,8 +138,9 @@ sealed class PrintWindow:Form
             core.NavigationCompleted+=async(s,e)=>{
                 if(!e.IsSuccess){if(Program.Test!=null)Finish("FAIL: Navigation "+e.WebErrorStatus);return;}
                 ready=true;
-                if(Program.Test!=null&&!testing){testing=true;await CheckApp();}
+                if(Program.Test!=null&&JagoSuiteBootstrap.TestRoot(Environment.GetCommandLineArgs())==null&&!testing){testing=true;await CheckApp();}
             };
+            new JagoSuiteHost("dither",this,core);
             core.Navigate("https://jagodither.example/index.html");
         }catch(Exception e){if(Program.Test!=null)Finish("FAIL: "+e);else MessageBox.Show(this,"Please install Microsoft WebView2 Runtime or use the included HTML app.\n\n"+e.Message,Text);}
     }

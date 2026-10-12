@@ -1,0 +1,11 @@
+*.exe
+*.pdb
+Profiles/
+Profile/
+node_modules/
+.sdk/
+__pycache__/
+Jago-*.html
+Tools/PDF/
+Tests/Run/
+!index.html

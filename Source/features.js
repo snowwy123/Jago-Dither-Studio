@@ -185,8 +185,8 @@ function handleKeys(e) {
   } else {
     if (e.code === 'Space') action = togglePlay;
     if (key === '?') action = () => $('helpDialog').showModal();
-    if (['1', '2', '3', '4', '5'].includes(key))
-      action = () => showTab(['print', 'ink', 'move', 'layers', 'play'][+key - 1]);
+    if (['1', '2', '3', '4', '5', '6'].includes(key))
+      action = () => showTab(['print', 'ink', 'move', 'layers', 'play', 'bench'][+key - 1]);
     if (key === 'b')
       action = () => {
         $('viewMode').value = $('viewMode').value === 'split' ? 'result' : 'split';
@@ -236,7 +236,7 @@ function handleKeys(e) {
   }
 }
 $('addGradient').onclick = addGradient;
-$('themeHelp').onclick = () => $('helpDialog').showModal();
+$('themeHelp').onclick = () => JagoSuiteHelp.openPreferences();
 for (const el of document.querySelectorAll('[data-map]')) {
   el.oninput = () => {
     opts.mapColours[+el.dataset.map] = el.value;

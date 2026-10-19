@@ -9,6 +9,8 @@ const dir = __dirname,
 let html = read('shell.html');
 for (const [marker, content] of [
   ['STYLE', read('style.css')],
+  ['MEDIA',read('Vendor/mediabunny.min.js')],
+  ['MOTION_MODEL',read('motion-model.cjs')],
   ['ENGINE', read('riso.js')+'\n'+read('engine.js')],
   [
     'DEMOS',
@@ -31,7 +33,7 @@ for (const [marker, content] of [
       '\n' +
       read('alignment.js') +
       '\n' +
-      read('features.js') + '\n' + read('suite-bridge.js') + '\n' + read('suite-adapter.js') + '\n' + read('suite-round.js')+'\n'+read('print-bench.js')+'\n'+read('explore.js')
+      read('features.js') + '\n' + read('suite-bridge.js') + '\n' + read('suite-adapter.js') + '\n' + read('suite-round.js')+'\n'+read('print-bench.js')+'\n'+read('explore.js')+'\n'+read('motion-workshop.js')+'\n'+read('directions.js')
   ]
 ]) {
   const slot = '/* ' + marker + ' */';

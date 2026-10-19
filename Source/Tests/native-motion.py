@@ -1,0 +1,4 @@
+from pathlib import Path
+import subprocess,os,json,time,base64
+r=Path(__file__).resolve().parents[2];o=Path(os.environ.get('JAGO_PROJECT_TEST_WORK',__import__('tempfile').gettempdir()))/('Dither-native-motion-'+time.strftime('%H%M%S'));o.mkdir();code=(r/'Source/Native-probes/motion-expansion.js').read_text(encoding='utf-8').replace('FIXTURE',json.dumps(base64.b64encode(Path(os.environ.get('DITHER_MEDIA_FIXTURE',r'C:\Jago Studio Dev\work\Dither-motion-fixture.mp4')).read_bytes()).decode()));(o/'probe.js').write_text(code,encoding='utf-8');env=os.environ.copy();env['JAGO_SUITE_ROOT']=str(o/'Suite');si=subprocess.STARTUPINFO();si.dwFlags=subprocess.STARTF_USESHOWWINDOW;si.wShowWindow=0
+subprocess.run([str(r/'Jago-Dither.exe'),'--suite-test',str(o)],env=env,startupinfo=si,timeout=80,check=True);data=json.loads((o/'result.json').read_text(encoding='utf-8-sig'));print(json.dumps({'folder':str(o),'result':data}));assert data['ok'],data

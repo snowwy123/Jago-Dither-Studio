@@ -979,3 +979,10 @@ progress {
   }
 }
 .print-directions{width:min(1000px,calc(100vw - 48px));max-width:none}.print-directions-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}.print-directions-grid section{min-width:0}.print-directions-grid canvas{width:100%;height:190px;object-fit:contain;background:var(--paper);image-rendering:pixelated}.print-directions-grid button{width:100%;margin-top:8px}@media(max-width:800px){.print-directions-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}[data-panel="bench"] input[type=number]{max-width:100%;box-sizing:border-box}
+
+/* Motion workshop: primary actions stay visible; import choices wrap on narrow windows. */
+#motionWorkshop,#seededDirections{padding:12px;border:1px solid var(--line,#a7b2aa);border-radius:9px;margin-bottom:14px}#seededDirections .row,#motionWorkshop .row{display:flex;flex-wrap:wrap;gap:6px}.motion-dialog{max-width:700px;width:calc(100vw - 40px);max-height:90vh;overflow:auto}.motion-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.motion-fields label{display:flex;flex-direction:column;gap:4px}.motion-dialog progress{width:100%}.print-directions input{max-width:100%;width:100%;margin-top:6px}.print-directions-grid canvas{max-width:100%;height:auto}#directionSeed{width:100%}@media(max-width:600px){.motion-fields{grid-template-columns:1fr}}
+
+.motion-directions .print-directions-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.motion-directions .print-directions-grid canvas{width:100%;height:155px;object-fit:contain;background:var(--field,#fffaf0)}.motion-directions .row{display:flex;gap:6px;flex-wrap:wrap}.motion-directions .row button{width:auto;flex:1}.motion-directions input{padding:5px}.motion-directions h2{padding-right:30px}.motion-directions>.close{float:right}@media(max-width:600px){.motion-directions .print-directions-grid{grid-template-columns:1fr}}
+
+#seededDirections>label{display:block;margin:8px 0}#seededDirections>label>select,#seededDirections>label>input{display:block;width:100%;margin-top:4px}#seededDirections .check{display:inline-flex;align-items:center;gap:5px}

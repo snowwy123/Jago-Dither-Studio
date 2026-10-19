@@ -429,6 +429,8 @@ function validateScene(s, prepared) {
     s.layers.length > 12
   )
     throw Error('This project has an invalid canvas.');
+  if(s.printDirections!==undefined){if(!Array.isArray(s.printDirections)||s.printDirections.length>8)throw Error('A project can keep eight print directions.');s.printDirections=s.printDirections.map(item=>{if(!item||typeof item.id!=='string'||item.id.length>80||typeof item.name!=='string'||item.name.length>60||typeof item.seed!=='string'||item.seed.length>64)throw Error('Invalid saved print direction.');return{id:item.id,name:item.name,seed:item.seed,settings:Dither.settings(item.settings)};});}
+  if(s.exploreSeed!==undefined&&(typeof s.exploreSeed!=='string'||s.exploreSeed.length>64))throw Error('Invalid exploration seed.');
   const seen = new Set();
   for (const l of s.layers) {
     if (
@@ -880,7 +882,7 @@ async function exportPrint() {
             fileName(view === 'print' ? '.png' : '-comparison.png')
           );
         if (kind === 'gif') {
-          if (!gif) gif = new GIFWriter(w, h);
+          if (!gif) gif = new GIFWriter(w, h, fixedGIFPalette(printGIFColours(saved)));
           const delay =
             (Math.round((((i + 1) * saved.seconds) / count) * 100) -
               Math.round(((i * saved.seconds) / count) * 100)) /

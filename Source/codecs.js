@@ -100,6 +100,9 @@ function quantizeRGBA(rgba) {
   return { palette, indices };
 }
 
+function printGIFColours(settings){if(!settings.riso.enabled)return Dither.inkColours(settings);const paper=[1,3,5].map(i=>parseInt(settings.riso.paper.slice(i,i+2),16)),inks=settings.riso.inks.filter(i=>i.enabled).map(i=>[1,3,5].map(n=>parseInt(i.colour.slice(n,n+2),16))),colours=[];for(let mask=0;mask<1<<inks.length;mask++){const c=paper.slice();inks.forEach((ink,i)=>{if(mask&(1<<i))for(let n=0;n<3;n++)c[n]*=ink[n]/255;});colours.push('#'+c.map(n=>Math.round(n).toString(16).padStart(2,'0')).join(''));}return colours;}
+function fixedGIFPalette(colours){const list=[],seen=new Set();const add=c=>{const key=c.join(',');if(!seen.has(key)&&list.length<255){seen.add(key);list.push(c);}};for(const hex of colours)add([1,3,5].map(i=>parseInt(hex.slice(i,i+2),16)));for(let r=0;r<6;r++)for(let g=0;g<6;g++)for(let b=0;b<6;b++)add([r*51,g*51,b*51]);const palette=new Uint8Array(768);list.forEach((c,i)=>palette.set(c,(i+1)*3));return{palette,colours:list,lookup:new Map()};}
+function quantizeFixedRGBA(rgba,fixed){const indices=new Uint8Array(rgba.length/4);for(let p=0;p<indices.length;p++){const at=p*4;if(rgba[at+3]<16)continue;const key=(rgba[at]<<16)|(rgba[at+1]<<8)|rgba[at+2];let nearest=fixed.lookup.get(key);if(nearest===undefined){let distance=Infinity;fixed.colours.forEach((c,i)=>{const d=(rgba[at]-c[0])**2*.3+(rgba[at+1]-c[1])**2*.59+(rgba[at+2]-c[2])**2*.11;if(d<distance){distance=d;nearest=i+1;}});if(fixed.lookup.size<65536)fixed.lookup.set(key,nearest);}indices[p]=nearest;}return{palette:fixed.palette,indices};}
 function lzwEncode(indices) {
   const bytes = [];
   let accum = 0,
@@ -147,7 +150,8 @@ function lzwEncode(indices) {
 }
 
 class GIFWriter {
-  constructor(w, h) {
+  constructor(w, h, palette = null) {
+    this.fixedPalette=palette;
     this.chunks = [];
     this.w = w;
     this.h = h;
@@ -175,7 +179,7 @@ class GIFWriter {
     this.chunks.push(a instanceof Uint8Array ? a : new Uint8Array(a));
   }
   add(rgba, delay, transparent) {
-    const { palette, indices } = quantizeRGBA(rgba),
+    const { palette, indices } = this.fixedPalette?quantizeFixedRGBA(rgba,this.fixedPalette):quantizeRGBA(rgba),
       cs = clamp(Math.round(delay * 100), 2, 65535);
     this.push([
       0x21,

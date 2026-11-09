@@ -47,6 +47,7 @@ let opts = copy(Dither.defaults),
 let phase = 0,
   playing = false,
   playStart = 0,
+  playbackFrame = 0,
   frame = 0,
   busy = false,
   cancelled = false,
@@ -68,7 +69,7 @@ const workerURL = URL.createObjectURL(
   new Blob(
     [
       engineSource,
-      '\nlet source; onmessage=e=>{ const m=e.data; try { if(m.type==="source"){source=m.source;postMessage({id:m.id,ok:true});}else{ if(m.source)source=m.source; const out=Dither.render(source,m.opts,m.phase);postMessage({id:m.id,out},[out.data.buffer]);}}catch(error){postMessage({id:m.id,error:error.message});}}'
+      '\nlet source; onmessage=e=>{ const m=e.data; try { if(m.type==="source"){source=m.source;postMessage({id:m.id,ok:true});}else{ if(m.source)source=m.source; const out=Dither.render(source,m.opts,m.phase,m.context);postMessage({id:m.id,out},[out.data.buffer]);}}catch(error){postMessage({id:m.id,error:error.message});}}'
     ],
     { type: 'text/javascript' }
   )
@@ -140,6 +141,8 @@ async function restore(delta) {
 }
 function pause() {
   playing = false;
+  cancelAnimationFrame(playbackFrame);
+  playbackFrame = 0;
   $('playBtn').textContent = '▶';
   $('playBtn').setAttribute('aria-label', 'Play loop');
 }
@@ -149,13 +152,14 @@ function togglePlay() {
     pause();
     return;
   }
-  if (opts.motion === 'none' && !sceneMoves() && opts.temporal === 'none' && !opts.animateEffects) {
+  if (opts.motion === 'none' && !(opts.studio.optics.finishEnabled&&opts.studio.optics.scanEnabled&&opts.studio.optics.scanRoll&&opts.studio.optics.scanStrength) && !(opts.studio.optics.warpEnabled && opts.studio.warpAnimate && opts.studio.warp!=='off') && !sceneMoves() && !window.JagoDitherLayers?.moving() && opts.temporal === 'none' && !opts.animateEffects) {
     toast('Choose a movement first, then press Play.');
     showTab('move');
     return;
   }
   playing = true;
   playStart = performance.now() - phase * opts.seconds * 1000;
+  playbackFrame = requestAnimationFrame(tick);
   $('playBtn').textContent = 'Ⅱ';
   $('playBtn').setAttribute('aria-label', 'Pause loop');
 }
@@ -257,10 +261,12 @@ function renderPalette() {
   });
   $('addInk').disabled = opts.palette.length >= 8;
 }
+function renderSceneKey(){return JSON.stringify({...scene,clipAudio:undefined});}
 function requestPrint() {
   if (!source) return;
   revision++;
-  pending = { opts: copy(opts), phase, rev: revision, sceneKey:JSON.stringify(scene) };
+  pending = { opts: copy(opts), phase, rev: revision, sceneKey:playing?renderSceneKey():null, settingsKey:playing?JSON.stringify(opts):null };
+  pending.opts.width=window.JagoDitherPreview?.width(opts.width)??opts.width;
   pump();
 }
 async function pump() {
@@ -271,26 +277,27 @@ async function pump() {
   const started = performance.now();
   try {
     const composed = compose(request.phase);
+    const composedPixels = pixelsOf(composed);
     const out = await callWorker({
       type: 'render',
-      source: pixelsOf(composed),
+      source: composedPixels,
       opts: request.opts,
       phase: request.phase
     });
-    if (request.rev === revision || (playing&&request.sceneKey===JSON.stringify(scene)&&JSON.stringify(request.opts)===JSON.stringify(opts))) {
+    if (request.rev === revision || (playing&&request.sceneKey===renderSceneKey()&&request.settingsKey===JSON.stringify(opts))) {
       latest = out;
       paintOutput(result, out, 1, request.phase);
       sourceCanvas = composed;
-      source = pixelsOf(composed);
+      source = composedPixels;
       drawOriginal(request.phase);
       fitPaper();
       $('dimensions').textContent = scene.width + ' × ' + scene.height;
       $('dimensions').title =
         'Resize page · print output ' + out.outputWidth + ' × ' + out.outputHeight;
-      $('renderTime').textContent = Math.round(performance.now() - started) + ' ms';
+      $('renderTime').textContent = (request.opts.width!==opts.width?'Draft · ':'')+Math.round(performance.now() - started) + ' ms';
       $('statusText').textContent = opts.riso.enabled?'Layered inks / '+opts.riso.screen+' screen':playing
         ? 'Looping on the print table'
-        : methodHints[opts.method].split('.')[0] + '.';
+        : (opts.studio.family==='print'?methodHints[opts.method].split('.')[0]:opts.studio.family==='screen'?'Luminous '+opts.studio.screenMask+' screen cells':'Editable character grid') + '.';
     }
   } catch (e) {
     toast(e.message);
@@ -583,14 +590,15 @@ $('resetMotion').onclick = () => {
     'motion',
     'amount',
     'waves',
-    'seconds',
-    'fps',
     'temporal',
     'temporalAmount',
     'temporalCycles',
     'animateEffects'
   ])
     opts[k] = Dither.defaults[k];
+  opts.studio={...opts.studio,warpAnimate:false,optics:{...opts.studio.optics,scanRoll:false}};
+  for(const l of scene.layers)if(l.look?.mode==='custom')l.look.settings=Dither.settings(DitherMotion.stable(l.look.settings));
+  opts.riso={...opts.riso,registrationMotion:0};
   phase = 0;
   remember();
   sync();
@@ -688,7 +696,9 @@ window.addEventListener('beforeunload', (e) => {
 });
 let lastFrame = -1;
 function tick(now) {
-  if (playing && !busy && !document.hidden) {
+  playbackFrame = 0;
+  if (!playing) return;
+  if (!busy && !document.hidden) {
     const next = Math.floor(
       ((((now - playStart) / 1000) % opts.seconds) / opts.seconds) * frameCount()
     );
@@ -699,9 +709,8 @@ function tick(now) {
       if (!rendering) requestPrint();
     }
   }
-  requestAnimationFrame(tick);
+  if (playing) playbackFrame = requestAnimationFrame(tick);
 }
-requestAnimationFrame(tick);
 // The colour panel is non-modal, so the print remains visible while mixing ink.
 function hexHSV(hex) {
   const c = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255),

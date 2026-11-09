@@ -1,0 +1,22 @@
+[
+ {"id":"chrome-bloom","name":"Chrome Bloom","file":"Examples/Showcase/Chrome-Bloom.jagodither","group":"Showcase","description":"Luminous chrome sculpture, protected blacks and curved phosphor."},
+ {"id":"acid-frequency","name":"Acid Frequency","file":"Examples/Showcase/Acid-Frequency.jagodither","group":"Showcase","description":"Acidic lime, ordered dither and warped optical contours."},
+ {"id":"hot-press","name":"Hot Press","file":"Examples/Showcase/Hot-Press.jagodither","group":"Showcase","description":"Elliptical halftones, orange and mulberry inks, imperfect registration."},
+ {"id":"ghost-protocol","name":"Ghost Protocol","file":"Examples/Showcase/Ghost-Protocol.jagodither","group":"Showcase","description":"Measured-density character art, terminal ink and curved glass."},
+ {"id":"chrome-live","name":"Chrome Bloom Live","file":"Examples/Live-Looks/Chrome-Bloom-Live.jagodither","group":"Showcase","description":"Moving phosphor artwork with its own effects and clean editable lettering."},
+ {"id":"acid-live","name":"Acid Frequency Live","file":"Examples/Live-Looks/Acid-Frequency-Live.jagodither","group":"Showcase","description":"Optical drift and subtle swirl; typography stays clean."},
+ {"id":"quiet-colour","name":"Quiet Colour","file":"Examples/Quiet-colour.jagodither","group":"Technique studies","description":"Separate soft visibility ranges for colour cells and glow."},
+ {"id":"curved-phosphor","name":"Curved Phosphor","file":"Examples/Curved-phosphor.jagodither","group":"Technique studies","description":"Screen curvature, restrained scanlines and halation."},
+ {"id":"fisheye-texture","name":"Fisheye Texture","file":"Examples/Fisheye-texture.jagodither","group":"Technique studies","description":"A fisheye lens combined with an additional line texture."},
+ {"id":"luminous-signal","name":"Luminous Signal","file":"Examples/Luminous-signal.jagodither","group":"Technique studies","description":"Original signal animation rebuilt as luminous cells."},
+ {"id":"terminal-signal","name":"Terminal Signal","file":"Examples/Terminal-signal.jagodither","group":"Technique studies","description":"The signal study drawn with editable character cells."},
+ {"id":"crosshatch","name":"Two-ink Crosshatch","file":"Examples/Two-ink-crosshatch.jagodither","group":"Technique studies","description":"Overlapping print screens, paper and two ink colours."},
+ {"id":"after-hours","name":"After Hours","file":"Examples/After-hours.jagodither","group":"Print projects","description":"Editable lettering, a gradient backdrop and boiling print texture."},
+ {"id":"bounce-print","name":"Bounce & Print","file":"Examples/Bounce-and-print.jagodither","group":"Print projects","description":"A moving print project with embedded source frames."},
+ {"id":"hills-lights","name":"Lights over the Hills","file":"Examples/Lights-over-the-hills.jagodither","group":"Print projects","description":"Layered artwork and finishing over the original hill study."},
+ {"id":"blink","name":"Blinking Print","file":"Examples/Blinking-print.jagodither","group":"Print projects","description":"A short moving source for trying print treatments and clip timing."},
+ {"id":"wobble-morning","name":"A Quiet Morning","study":"morning","group":"Wobble drawings","description":"Steam, stripes and a warm cup. Source artwork; keeps your current look."},
+ {"id":"wobble-pear","name":"The Wonky Pear","study":"pear","group":"Wobble drawings","description":"Soft brush shading for dots and grain. Source artwork; keeps your current look."},
+ {"id":"wobble-type","name":"Make Some Noise","study":"type","group":"Wobble drawings","description":"Brush letters with a little sway. Source artwork; keeps your current look."},
+ {"id":"wobble-hills","name":"Faraway Hills","study":"hills","group":"Wobble drawings","description":"Pencil ridges, warm sun and birds. Source artwork; keeps your current look."}
+]

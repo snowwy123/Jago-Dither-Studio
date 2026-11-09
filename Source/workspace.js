@@ -94,16 +94,16 @@ function layerPose(l, t) {
   if (l.motion === 'spin') angle += t * 360;
   return { x, y, angle, scale };
 }
-function compose(t) {
-  const key = JSON.stringify({...scene,active:undefined}) + (sceneMoves(true) ? t : 0);
-  if (key === composingKey && composingCanvas) return composingCanvas;
+function compose(t, scope = null) {
+  const key = JSON.stringify({...scene,active:undefined,clipAudio:undefined}) + (sceneMoves(true) ? t : 0);
+  if (!scope && key === composingKey && composingCanvas) return composingCanvas;
   const c = makeCanvas(scene.width, scene.height),
     g = c.getContext('2d');
-  if (!scene.clear) {
+  if (!scene.clear && (!scope || scope.paper)) {
     g.fillStyle = scene.paper;
     g.fillRect(0, 0, c.width, c.height);
   }
-  for (const l of scene.layers) {
+  for (const l of (scope ? scope.layers : scene.layers)) {
     if (!l.visible || !l.opacity || (l.kind === 'overlay' && l.stage === 'after')) continue;
     const p = layerPose(l, t);
     g.save();
@@ -139,6 +139,7 @@ function compose(t) {
     }
     g.restore();
   }
+  if (scope) return c;
   composingKey = key;
   composingCanvas = c;
   return c;
@@ -379,7 +380,7 @@ function projectObject() {
   }
   return {
     format: 'jago-dither',
-    version: scene.layers.some((l) => l.kind === 'overlay') ? 4 : 3,
+    version: scene.layers.some(l=>l.look && l.look.mode!=='inherit') ? 5 : scene.layers.some((l) => l.kind === 'overlay') ? 4 : 3,
     name: sourceName,
     settings: opts,
     scene,
@@ -389,7 +390,7 @@ function projectObject() {
 async function saveProject() {
   document.activeElement?.blur();
   if (pendingProjectSave) return toast('Your project is still saving.');
-  const text = JSON.stringify(projectObject());
+  let cover=document.getElementById('resultCanvas');try{const clean=makeCanvas(1,1),frame=compose(0),settings={...opts,width:320};const printed=Dither.render(pixelsOf(frame),settings,0);paintOutput(clean,printed,1,0);cover=clean;}catch{}const text = JSON.stringify(JagoProjectPreview.attach(projectObject(),cover));
   if (text.length > 100 * 1024 * 1024)
     return toast('This project is too large to save. Remove a large loop layer first.');
   const previous = savedState,
@@ -431,6 +432,7 @@ function validateScene(s, prepared) {
     throw Error('This project has an invalid canvas.');
   if(s.printDirections!==undefined){if(!Array.isArray(s.printDirections)||s.printDirections.length>8)throw Error('A project can keep eight print directions.');s.printDirections=s.printDirections.map(item=>{if(!item||typeof item.id!=='string'||item.id.length>80||typeof item.name!=='string'||item.name.length>60||typeof item.seed!=='string'||item.seed.length>64)throw Error('Invalid saved print direction.');return{id:item.id,name:item.name,seed:item.seed,settings:Dither.settings(item.settings)};});}
   if(s.exploreSeed!==undefined&&(typeof s.exploreSeed!=='string'||s.exploreSeed.length>64))throw Error('Invalid exploration seed.');
+  if(s.clipAudio!==undefined)s.clipAudio=DitherClipAudio.validate(s.clipAudio);
   const seen = new Set();
   for (const l of s.layers) {
     if (
@@ -453,6 +455,7 @@ function validateScene(s, prepared) {
       typeof l.flipY !== 'boolean'
     )
       throw Error('This project has an invalid layer.');
+    l.look = DitherLayerLookModel.validate(l.look, Dither.settings);
     seen.add(l.id);
     if (['text', 'gradient'].includes(l.kind)) {
       l.fillMode ??= 'solid';
@@ -513,7 +516,7 @@ async function readProject(file, recipe = false) {
   const obj = JSON.parse(await file.text());
   if (
     obj.format !== (recipe ? 'jago-dither-recipe' : 'jago-dither') ||
-    !(recipe ? [1] : [1, 2, 3, 4]).includes(obj.version) ||
+    !(recipe ? [1] : [1, 2, 3, 4, 5]).includes(obj.version) ||
     typeof obj.name !== 'string' ||
     obj.name.length > 70
   )
@@ -757,7 +760,7 @@ function exportInfo() {
   $('exportScale').disabled = ['jago', 'text'].includes(kind);
   $('bridgeField').hidden = !bridge;
   $('separateInksField').hidden = !bridge;
-  $('separateInks').disabled = afterOverlays();
+  $('separateInks').disabled = afterOverlays() || !!window.JagoDitherLayers?.active();
   $('overlayExportHint').hidden = !afterOverlays();
   $('exportInfo').textContent =
     kind === 'text'
@@ -813,7 +816,7 @@ async function exportPrint() {
   const scale = ['jago', 'text'].includes(kind) ? 1 : +$('exportScale').value;
   const view = ['jago', 'text'].includes(kind) ? 'print' : $('exportView').value;
   const transferLayers =
-    bridge && $('separateInks').checked && !afterOverlays()
+    bridge && $('separateInks').checked && !afterOverlays() && !window.JagoDitherLayers?.active()
       ? Dither.inkColours(saved).map((hex, i) => ({
           id: 'ink' + i,
           name: 'Ink ' + (i + 1) + ' · ' + hex,
@@ -826,6 +829,7 @@ async function exportPrint() {
   const count = ['gif', 'frames', 'jago'].includes(kind)
     ? Math.max(1, Math.round(saved.seconds * rate))
     : 1;
+  if (kind === 'text' && window.JagoDitherLayers?.active()) return toast('Layer looks are a combined image. Export PNG or video, or return layers to Follow whole look for text grids.');
   if (kind === 'text' && saved.method !== 'ascii')
     return toast('Choose Typewriter club in Print to export characters.');
   if (bridge && (count > 48 || Math.abs(count / rate - saved.seconds) > 0.002))

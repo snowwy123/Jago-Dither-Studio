@@ -1,0 +1,26 @@
+[
+  {
+    "name": "Chrome-Bloom",
+    "description": "RGB slots, protected blacks, curved glass and a restrained highlight halo.",
+    "layers": 6,
+    "verified_save_reopen": true
+  },
+  {
+    "name": "Acid-Frequency",
+    "description": "Ordered dither, acidic two-colour ink and curved optical geometry.",
+    "layers": 6,
+    "verified_save_reopen": true
+  },
+  {
+    "name": "Hot-Press",
+    "description": "Two overlapping inks, elliptical halftones, registration offset and paper fibres.",
+    "layers": 6,
+    "verified_save_reopen": true
+  },
+  {
+    "name": "Ghost-Protocol",
+    "description": "Measured character density, pale terminal ink, curved glass and soft scanlines.",
+    "layers": 6,
+    "verified_save_reopen": true
+  }
+]

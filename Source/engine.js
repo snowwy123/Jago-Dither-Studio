@@ -27,13 +27,16 @@
     'floyd',
     'atkinson',
     'grain',
+    'ellipse',
     'dots',
     'lines',
     'threshold',
     'ascii'
   ];
   const motions = ['none', 'drift', 'ripple', 'sway', 'breathe', 'crawl', 'zoom', 'twist'];
+  const Studio = typeof module !== 'undefined' ? require('./studio-engine.js') : root.DitherStudio;
   const defaults = {
+    studio: Studio.defaults,
     riso: Riso.defaults,
     method: 'bayer4',
     cell: 3,
@@ -184,6 +187,7 @@
     if(!s.selective||!["off","include","exclude"].includes(s.selective.mode)||!["palette","source"].includes(s.selective.retain)||!Array.isArray(s.selective.colours)||s.selective.colours.length>16||s.selective.colours.some(c=>typeof c!=="string"||!/^#[0-9a-f]{6}$/i.test(c))||!Number.isFinite(s.selective.tolerance)||s.selective.tolerance<0||s.selective.tolerance>100)throw Error("Invalid selective colour rules");
     s.selective={...s.selective,colours:[...s.selective.colours]};
     s.riso=Riso.settings(s.riso);
+    s.studio=Studio.settings(s.studio);
     return Object.fromEntries(
       Object.keys(defaults).map((k) => [k, Array.isArray(s[k]) ? [...s[k]] : s[k]])
     );
@@ -218,6 +222,7 @@
     'bayer8',
     'bayer16',
     'grain',
+    'ellipse',
     'dots',
     'lines',
     'crosshatch',
@@ -248,6 +253,7 @@
     switch (method) {
       case 'grain':
         return noise(x, y, s.seed);
+      case 'ellipse': return clamp(u*u*.9+v*v*3,0,1);
       case 'dots':
         return clamp(
           (((mod(x, 6) + 0.5) / 6 - 0.5) ** 2 + ((mod(y, 6) + 0.5) / 6 - 0.5) ** 2) * 2,
@@ -316,7 +322,7 @@
     }
     return out;
   }
-  function render(source, opts, phase = 0) {
+  function baseRender(source, opts, phase = 0) {
     const s = settings(opts),
       sw = source.width,
       sh = source.height;
@@ -477,8 +483,10 @@
         for (let c = 0; c < 3; c++)
           samples[i * 3 + c] = clamp(samples[i * 3 + c] + (glow[i] * s.bloom) / 40, 0, 255);
     }
+    if(s.studio.optics.dotGain&&['dots','ellipse','lines','crosshatch','diamonds','rings','weave'].includes(s.method)){for(let i=0;i<w*h;i++){const t=luma(samples.subarray(i*3,i*3+3))/255,spread=s.studio.optics.dotGain/100*t*(1-t)*510;for(let k=0;k<3;k++)samples[i*3+k]=clamp(samples[i*3+k]-spread,0,255);}}
     if (s.mapMode !== 'off') {
       for (let i = 0; i < w * h; i++) {
+        if(s.studio.gradientMid!==.5||s.studio.gradientSpace!=='srgb'){samples.set(Studio.gradient(Array.from(samples.subarray(i*3,i*3+3)),s),i*3);continue;}
         const t =
           clamp(luma(samples.subarray(i * 3, i * 3 + 3)) / 255, 0, 1) * (palette.length - 1);
         const a = Math.min(palette.length - 2, Math.floor(t)),
@@ -651,6 +659,7 @@
       transparent: s.transparent
     };
   }
+  function render(source, opts, phase=0, context={}) { const s=settings(opts); return Studio.render(source,s,phase,baseRender,context); }
   const api = {
     render,
     settings,

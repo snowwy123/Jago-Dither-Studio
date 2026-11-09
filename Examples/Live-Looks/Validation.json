@@ -1,0 +1,17 @@
+{
+  "ok": true,
+  "examples": [
+    {
+      "name": "Chrome-Bloom-Live",
+      "save_reopen_pixels": true,
+      "moving_frames": true,
+      "preview": "480px / 3 seconds / 12fps"
+    },
+    {
+      "name": "Acid-Frequency-Live",
+      "save_reopen_pixels": true,
+      "moving_frames": true,
+      "preview": "480px / 3 seconds / 12fps"
+    }
+  ]
+}
